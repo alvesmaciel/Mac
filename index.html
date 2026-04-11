@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AutoFinance</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="./src/css/cursor.css">
+    <link rel="stylesheet" href="./src/css/preloader.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <!-- ===================== PRELOADER ===================== -->
+    <div id="preloader">
+        <div class="preloader-inner">
+            <div class="preloader-logo">
+                <img src="images/Logo White.png" alt="AutoFinance" class="logo logo--preloader" />
+            </div>
+
+            <div class="preloader-bar">
+                <div class="preloader-fill"></div>
+            </div>
+
+            <div class="preloader-counter">0%</div>
+        </div>
+    </div>
+
+
+    <!-- ===================== CURSOR ===================== -->
+    <div id="cursor"></div>
+    <div id="cursor-follower"></div>
+
+    <div class="app">
+        <aside class="chat-panel">
+            <header class="chat-header">
+                <div class="logo-row">
+                    <div class="logo">
+                        <span class="logo-mark">AF</span>
+                        <span class="logo-text">AutoFinance</span>
+                    </div>
+                    <div class="header-actions">
+                        <button id="darkToggleBtn" title="Alternar tema">Lua</button>
+                        <button id="clearChatBtn" title="Limpar historico do chat">Limpar chat</button>
+                    </div>
+                </div>
+                <p class="chat-sub">Digite suas financas em linguagem natural</p>
+            </header>
+
+            <div class="chat-messages" id="chatMessages"></div>
+
+            <div class="chat-input-wrap">
+                <div class="autocomplete-box" id="autocompleteBox"></div>
+                <div class="chat-input-area">
+                    <input type="text" id="chatInput" class="chat-input" placeholder="Ex: recebi 1443,13 salario..."
+                        autocomplete="off" />
+                    <button class="send-btn" id="sendBtn" aria-label="Enviar">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <main class="dashboard-panel">
+            <div class="dash-header">
+                <h1 class="dash-title">Painel Financeiro</h1>
+                <button class="graph-toggle-btn" id="graphToggleBtn">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
+                    Ver graficos
+                </button>
+                                <button class="graph-toggle-btn" id="graphToggleBtn">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
+                    Relatório
+                </button>
+            </div>
+
+            <div class="kpi-grid">
+                <div class="kpi-card kpi--balance">
+                    <span class="kpi-label">Saldo Total</span>
+                    <span class="kpi-value" id="kpiBalance">R$ 0,00</span>
+                </div>
+                <div class="kpi-card kpi--income">
+                    <span class="kpi-label">Total Recebido</span>
+                    <span class="kpi-value" id="kpiIncome">R$ 0,00</span>
+                </div>
+                <div class="kpi-card kpi--expense">
+                    <span class="kpi-label">Total Gasto</span>
+                    <span class="kpi-value" id="kpiExpense">R$ 0,00</span>
+                </div>
+                <div class="kpi-card kpi--receivable">
+                    <span class="kpi-label">A Receber</span>
+                    <span class="kpi-value" id="kpiReceivable">R$ 0,00</span>
+                </div>
+                <div class="kpi-card kpi--debt">
+                    <span class="kpi-label">A Pagar</span>
+                    <span class="kpi-value" id="kpiDebt">R$ 0,00</span>
+                </div>
+            </div>
+
+            <div class="table-section">
+                <div class="table-header-row">
+                    <h2 class="section-title">Transacoes</h2>
+                    <div class="table-toolbar">
+                        <input type="text" id="txSearchInput" class="table-search-input"
+                            placeholder="Buscar descricao ou categoria" />
+                        <select id="txFilterSelect" class="table-select">
+                            <option value="all">Todos</option>
+                            <option value="income">Receitas</option>
+                            <option value="expense">Gastos</option>
+                            <option value="debt">A pagar</option>
+                            <option value="receivable">A receber</option>
+                        </select>
+                        <select id="txSortSelect" class="table-select">
+                            <option value="newest">Mais recentes</option>
+                            <option value="oldest">Mais antigas</option>
+                            <option value="highest">Maior valor</option>
+                            <option value="lowest">Menor valor</option>
+                            <option value="category">Categoria</option>
+                        </select>
+                        <button class="clear-btn" id="clearBtn">Limpar tudo</button>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table class="tx-table">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Descricao</th>
+                                <th>Categoria</th>
+                                <th>Valor</th>
+                                <th>Acoes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="txTableBody">
+                            <tr class="empty-row" id="emptyRow">
+                                <td colspan="5">Nenhuma transacao encontrada.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="graph-section hidden" id="graphSection">
+                <h2 class="section-title" style="margin-bottom:1.2rem">Graficos</h2>
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <p class="chart-label">Gastos por Categoria</p>
+                        <canvas id="pieChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <p class="chart-label">Receita vs Despesa</p>
+                        <canvas id="barChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module" src="app-main.js"></script>
+    <script src="./src/ui/preloader.js"></script>
+    <script src="./src/ui/cursor.js"></script>
+</body>
+
+</html>
