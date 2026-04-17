@@ -1,0 +1,57 @@
+/* ═══════════════════════════════════
+   CURSOR — AutoFinance Clean
+═══════════════════════════════════ */
+
+/* desativa cursor padrão */
+body {
+    cursor: none;
+}
+
+#cursor {
+    position: fixed;
+    width: 6px;
+    height: 6px;
+    background: var(--ink);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+
+    transform: translate(-50%, -50%);
+}
+
+#cursor-follower {
+    position: fixed;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--cream-deep);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+
+    transform: translate(-50%, -50%);
+    transition: transform .2s ease, width .2s ease, height .2s ease;
+}
+
+/* hover elegante */
+.cursor-hover #cursor-follower {
+    width: 42px;
+    height: 42px;
+    border-color: var(--ink);
+}
+
+/* clique */
+.cursor-click #cursor {
+    transform: translate(-50%, -50%) scale(0.7);
+}
+
+html,
+body {
+    cursor: none;
+}
+
+#cursor,
+#cursor-follower {
+    position: fixed;
+    top: 0;
+    left: 0;
+}
