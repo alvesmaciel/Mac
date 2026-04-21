@@ -1,9 +1,10 @@
 import { round2, totalOf } from '../shared/utils.js';
 
-const STORAGE_KEY = 'autofinance_v3';
+const DEFAULT_KEY = 'autofinance_v3';
 
 export class FinanceStore {
-    constructor() {
+    constructor(storageKey = DEFAULT_KEY) {
+        this._storageKey = storageKey;
         this.balance = 0;
         this.income = [];
         this.expenses = [];
@@ -19,16 +20,16 @@ export class FinanceStore {
 
     load() {
         try {
-            const raw = localStorage.getItem(STORAGE_KEY);
+            const raw = localStorage.getItem(this._storageKey);
             if (!raw) return null;
 
             const data = JSON.parse(raw);
-            this.balance = data.balance ?? 0;
-            this.income = data.income ?? [];
-            this.expenses = data.expenses ?? [];
-            this.debts = data.debts ?? [];
-            this.receivables = data.receivables ?? [];
-            this.txIdCounter = data.txIdCounter ?? 0;
+            this.balance      = data.balance      ?? 0;
+            this.income       = data.income       ?? [];
+            this.expenses     = data.expenses     ?? [];
+            this.debts        = data.debts        ?? [];
+            this.receivables  = data.receivables  ?? [];
+            this.txIdCounter  = data.txIdCounter  ?? 0;
             return data;
         } catch (error) {
             console.warn('AutoFinance: erro ao carregar.', error);
@@ -39,41 +40,40 @@ export class FinanceStore {
     save(chatHistory = []) {
         try {
             const payload = JSON.stringify({
-                balance: this.balance,
-                income: this.income,
-                expenses: this.expenses,
-                debts: this.debts,
-                receivables: this.receivables,
-                txIdCounter: this.txIdCounter,
+                balance:      this.balance,
+                income:       this.income,
+                expenses:     this.expenses,
+                debts:        this.debts,
+                receivables:  this.receivables,
+                txIdCounter:  this.txIdCounter,
                 chatHistory,
             });
-            localStorage.setItem(STORAGE_KEY, payload);
-            // hot backup in sessionStorage to survive accidental localStorage clears
-            try { sessionStorage.setItem(STORAGE_KEY + '_bak', payload); } catch (_) {}
+            localStorage.setItem(this._storageKey, payload);
+            try { sessionStorage.setItem(this._storageKey + '_bak', payload); } catch (_) {}
         } catch (error) {
             console.warn('AutoFinance: erro ao salvar.', error);
         }
     }
 
     clear() {
-        this.balance = 0;
-        this.income = [];
-        this.expenses = [];
-        this.debts = [];
-        this.receivables = [];
-        this.txIdCounter = 0;
-        localStorage.removeItem(STORAGE_KEY);
-        try { sessionStorage.removeItem(STORAGE_KEY + '_bak'); } catch (_) {}
+        this.balance      = 0;
+        this.income       = [];
+        this.expenses     = [];
+        this.debts        = [];
+        this.receivables  = [];
+        this.txIdCounter  = 0;
+        localStorage.removeItem(this._storageKey);
+        try { sessionStorage.removeItem(this._storageKey + '_bak'); } catch (_) {}
     }
 
     addTransaction(parsed) {
         const tx = {
-            id: this.nextId(),
+            id:          this.nextId(),
             description: parsed.description,
-            value: parsed.value,
-            category: parsed.category,
-            raw: parsed.raw,
-            date: new Date().toISOString(),
+            value:       parsed.value,
+            category:    parsed.category,
+            raw:         parsed.raw,
+            date:        new Date().toISOString(),
         };
 
         switch (parsed.type) {
@@ -100,7 +100,7 @@ export class FinanceStore {
         const list = this.getTypeMap()[type];
         if (!list) return null;
 
-        const index = list.findIndex((item) => item.id === id);
+        const index = list.findIndex(item => item.id === id);
         if (index === -1) return null;
 
         const [removed] = list.splice(index, 1);
@@ -112,17 +112,17 @@ export class FinanceStore {
         const all = this.getAllTransactions();
         if (!all.length) return null;
 
-        const last = all[all.length - 1];
+        const last    = all[all.length - 1];
         const removed = this.deleteById(last.id, last.type);
         return removed ? { ...removed, type: last.type } : null;
     }
 
     updateTransaction(id, newData) {
-        const groups = this.getTypeMap();
-        let current = null;
+        const groups  = this.getTypeMap();
+        let current   = null;
 
         for (const list of Object.values(groups)) {
-            const index = list.findIndex((item) => item.id === id);
+            const index = list.findIndex(item => item.id === id);
             if (index !== -1) {
                 current = list.splice(index, 1)[0];
                 break;
@@ -132,10 +132,10 @@ export class FinanceStore {
         if (!current) return null;
 
         const updated = {
-            ...current,                              // preserves id, raw, date
+            ...current,
             description: newData.description,
-            category: newData.category,
-            value: parseFloat(newData.value) || 0,
+            category:    newData.category,
+            value:       parseFloat(newData.value) || 0,
         };
 
         groups[newData.type].push(updated);
@@ -149,17 +149,14 @@ export class FinanceStore {
 
     getTotals() {
         return {
-            balance: this.balance,
-            income: totalOf(this.income),
-            expenses: totalOf(this.expenses),
-            debts: totalOf(this.debts),
+            balance:     this.balance,
+            income:      totalOf(this.income),
+            expenses:    totalOf(this.expenses),
+            debts:       totalOf(this.debts),
             receivables: totalOf(this.receivables),
         };
     }
 
-    /* ── new: monthly aggregation ─────────────────
-       Returns { 'YYYY-MM': { income: N, expenses: N }, ... }
-    ─────────────────────────────────────────────── */
     getMonthlyTotals() {
         const map = {};
         this.getAllTransactions().forEach(tx => {
@@ -172,12 +169,8 @@ export class FinanceStore {
         return map;
     }
 
-    /* ── new: category totals ─────────────────────
-       type: 'expense' | 'debt' | 'income' | 'receivable' | null (all spending)
-       Returns { 'Alimentacao': 380.50, ... }
-    ─────────────────────────────────────────────── */
     getCategoryTotals(type = null) {
-        const map = {};
+        const map        = {};
         const candidates = type
             ? (this.getTypeMap()[type] ?? [])
             : [...this.expenses, ...this.debts];
@@ -197,7 +190,7 @@ export class FinanceStore {
     }
 
     getAllTransactions() {
-        const withType = (type) => (tx) => ({ ...tx, type });
+        const withType = type => tx => ({ ...tx, type });
         return [
             ...this.income.map(withType('income')),
             ...this.expenses.map(withType('expense')),
@@ -212,9 +205,9 @@ export class FinanceStore {
 
     getTypeMap() {
         return {
-            income: this.income,
-            expense: this.expenses,
-            debt: this.debts,
+            income:     this.income,
+            expense:    this.expenses,
+            debt:       this.debts,
             receivable: this.receivables,
         };
     }

@@ -1,0 +1,373 @@
+/* ═══════════════════════════════════════════════
+   Workspaces — ChatFinance
+   Dropdown selector, create/edit/delete modals
+═══════════════════════════════════════════════ */
+
+/* ── Selector wrapper ── */
+.ws-selector {
+    position: relative;
+}
+
+/* ── Trigger button ── */
+.ws-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .38rem .72rem .38rem .58rem;
+    border: 1.5px solid var(--cream-deep);
+    border-radius: var(--radius-sm);
+    background: var(--panel-bg);
+    font-family: var(--font-body);
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--ink);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color var(--t), box-shadow var(--t);
+    user-select: none;
+}
+
+.ws-btn:hover {
+    border-color: var(--ink);
+}
+
+.ws-icon {
+    font-size: .92rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.ws-name {
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ws-chevron {
+    color: var(--ink-faint);
+    flex-shrink: 0;
+    transition: transform .2s ease;
+}
+
+.ws-chevron.open {
+    transform: rotate(180deg);
+}
+
+/* ── Dropdown panel ── */
+.ws-dropdown {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    min-width: 210px;
+    background: var(--panel-bg);
+    border: 1.5px solid var(--cream-deep);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    z-index: 500;
+    overflow: hidden;
+    animation: wsDropIn .14s ease;
+}
+
+@keyframes wsDropIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.ws-drop-list {
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+/* ── Workspace row ── */
+.ws-drop-item {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    padding: .58rem .8rem;
+    cursor: pointer;
+    transition: background var(--t);
+    position: relative;
+}
+
+.ws-drop-item:hover {
+    background: var(--cream-dark);
+}
+
+.ws-drop-item.active {
+    background: var(--cream-dark);
+}
+
+.ws-drop-item.active .ws-drop-name {
+    font-weight: 600;
+}
+
+.ws-drop-icon {
+    font-size: .88rem;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.ws-drop-name {
+    flex: 1;
+    font-size: .81rem;
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Row action buttons (edit / delete) ── */
+.ws-drop-actions {
+    display: flex;
+    align-items: center;
+    gap: .18rem;
+    opacity: 0;
+    transition: opacity var(--t);
+}
+
+.ws-drop-item:hover .ws-drop-actions {
+    opacity: 1;
+}
+
+.ws-edit-btn,
+.ws-del-btn {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--ink-faint);
+    transition: background var(--t), color var(--t);
+}
+
+.ws-edit-btn:hover {
+    background: var(--cream-deep);
+    color: var(--ink);
+}
+
+.ws-del-btn:hover {
+    background: var(--red-light);
+    color: var(--red);
+}
+
+/* ── Dropdown footer ── */
+.ws-drop-footer {
+    border-top: 1px solid var(--cream-dark);
+    padding: .45rem .65rem;
+}
+
+.ws-add-btn {
+    display: flex;
+    align-items: center;
+    gap: .42rem;
+    width: 100%;
+    padding: .42rem .5rem;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: transparent;
+    font-family: var(--font-body);
+    font-size: .77rem;
+    color: var(--ink-muted);
+    cursor: pointer;
+    transition: background var(--t), color var(--t);
+}
+
+.ws-add-btn:hover {
+    background: var(--cream-dark);
+    color: var(--ink);
+}
+
+/* ══ Modal overlay ════════════════════════════ */
+.ws-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(28, 26, 23, .42);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 9000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    animation: wsFadeIn .15s ease;
+}
+
+.ws-modal-overlay.hidden {
+    display: none;
+}
+
+@keyframes wsFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* ── Modal card ── */
+.ws-modal {
+    background: var(--panel-bg);
+    border: 1.5px solid var(--cream-dark);
+    border-radius: var(--radius-md);
+    padding: 1.6rem;
+    width: 100%;
+    max-width: 360px;
+    box-shadow: var(--shadow-md);
+    animation: wsModalIn .18s cubic-bezier(.34, 1.56, .64, 1);
+}
+
+.ws-modal--sm {
+    max-width: 320px;
+}
+
+@keyframes wsModalIn {
+    from { opacity: 0; transform: scale(.93); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+.ws-modal-title {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    color: var(--ink);
+    margin-bottom: 1.15rem;
+    line-height: 1.2;
+}
+
+/* ── Icon picker ── */
+.ws-icon-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+    margin-bottom: 1.1rem;
+}
+
+.ws-icon-opt {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid transparent;
+    background: var(--cream-dark);
+    cursor: pointer;
+    transition: border-color var(--t), background var(--t);
+    line-height: 1;
+}
+
+.ws-icon-opt:hover {
+    background: var(--cream-deep);
+}
+
+.ws-icon-opt.selected {
+    border-color: var(--ink);
+    background: var(--cream-deep);
+}
+
+/* ── Modal field ── */
+.ws-modal-field {
+    margin-bottom: 1.2rem;
+}
+
+.ws-modal-label {
+    display: block;
+    font-size: .67rem;
+    font-weight: 500;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-bottom: .38rem;
+}
+
+.ws-modal-input {
+    width: 100%;
+    padding: .65rem .85rem;
+    border: 1.5px solid var(--cream-deep);
+    border-radius: var(--radius-md);
+    background: var(--dash-bg);
+    font-family: var(--font-body);
+    font-size: .84rem;
+    color: var(--ink);
+    outline: none;
+    transition: border-color var(--t), box-shadow var(--t);
+}
+
+.ws-modal-input:focus {
+    border-color: var(--ink);
+    box-shadow: 0 0 0 3px rgba(28, 26, 23, .06);
+}
+
+html.dark .ws-modal-input:focus {
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, .05);
+}
+
+/* ── Delete warning text ── */
+.ws-modal-warn {
+    font-size: .82rem;
+    color: var(--ink-muted);
+    line-height: 1.55;
+    margin-bottom: 1.2rem;
+}
+
+/* ── Modal action row ── */
+.ws-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: .55rem;
+}
+
+.ws-modal-cancel {
+    padding: .48rem .88rem;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--cream-deep);
+    background: transparent;
+    font-family: var(--font-body);
+    font-size: .78rem;
+    color: var(--ink-muted);
+    cursor: pointer;
+    transition: border-color var(--t), color var(--t);
+}
+
+.ws-modal-cancel:hover {
+    border-color: var(--ink);
+    color: var(--ink);
+}
+
+.ws-modal-confirm {
+    padding: .48rem .88rem;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: var(--ink);
+    font-family: var(--font-body);
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--cream);
+    cursor: pointer;
+    transition: opacity var(--t), transform var(--t);
+}
+
+.ws-modal-confirm:hover {
+    opacity: .85;
+    transform: translateY(-1px);
+}
+
+.ws-modal-delete {
+    padding: .48rem .88rem;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid rgba(192, 57, 43, .4);
+    background: transparent;
+    font-family: var(--font-body);
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--red);
+    cursor: pointer;
+    transition: background var(--t), border-color var(--t);
+}
+
+.ws-modal-delete:hover {
+    background: var(--red-light);
+    border-color: var(--red);
+}

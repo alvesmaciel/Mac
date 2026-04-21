@@ -202,6 +202,8 @@ export class ChatPanel {
         return `<strong>${title}:</strong><br>${content}`;
     }
 
+    
+
     handleSend() {
         const text = this.inputEl.value.trim();
         if (!text) return;
@@ -379,3 +381,5 @@ function suggestionLabel(type) {
         receivable: 'A Receber',
     }[type] || 'Item';
 }
+
+

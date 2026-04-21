@@ -1,230 +1,185 @@
 import { norm } from '../shared/utils.js';
 
-const CATEGORIES = {
-    alimento: 'Alimentacao',
-    alimentos: 'Alimentacao',
-    comida: 'Alimentacao',
-    restaurante: 'Alimentacao',
-    lanche: 'Alimentacao',
-    mercado: 'Alimentacao',
-    supermercado: 'Alimentacao',
-    padaria: 'Alimentacao',
-    cafe: 'Alimentacao',
-    pizza: 'Alimentacao',
-    hamburguer: 'Alimentacao',
-    marmita: 'Alimentacao',
-    feira: 'Alimentacao',
+/* ─────────────────────────────────────────
+   CATEGORIAS BASE
+───────────────────────────────────────── */
+const BASE_CATEGORIES = {
     ifood: 'Alimentacao',
-    rappi: 'Alimentacao',
-    delivery: 'Alimentacao',
-    almoco: 'Alimentacao',
-    jantar: 'Alimentacao',
-    janta: 'Alimentacao',
-    aluguel: 'Aluguel',
-    condominio: 'Moradia',
-    iptu: 'Moradia',
-    reforma: 'Moradia',
-    transporte: 'Transporte',
+    mercado: 'Alimentacao',
+    restaurante: 'Alimentacao',
     uber: 'Transporte',
     gasolina: 'Transporte',
-    combustivel: 'Transporte',
-    carro: 'Transporte',
-    onibus: 'Transporte',
-    metro: 'Transporte',
-    estacionamento: 'Transporte',
-    pedagio: 'Transporte',
-    moto: 'Transporte',
-    taxi: 'Transporte',
-    passagem: 'Transporte',
-    brt: 'Transporte',
-    lazer: 'Lazer',
-    cinema: 'Lazer',
-    show: 'Lazer',
-    festa: 'Lazer',
-    bar: 'Lazer',
-    balada: 'Lazer',
-    game: 'Lazer',
-    jogo: 'Lazer',
-    hobby: 'Lazer',
-    passeio: 'Lazer',
-    viagem: 'Viagem',
-    hotel: 'Viagem',
-    pousada: 'Viagem',
-    airbnb: 'Viagem',
-    saude: 'Saude',
-    medico: 'Saude',
-    remedio: 'Saude',
-    farmacia: 'Saude',
-    academia: 'Saude',
-    hospital: 'Saude',
-    dentista: 'Saude',
-    exame: 'Saude',
-    plano: 'Saude',
-    salario: 'Salario',
-    freelance: 'Freelance',
-    investimento: 'Investimento',
-    dividendo: 'Investimento',
-    dividendos: 'Investimento',
-    bonus: 'Bonus',
-    decimo: 'Bonus',
-    conta: 'Contas',
+    aluguel: 'Moradia',
     luz: 'Contas',
-    energia: 'Contas',
     agua: 'Contas',
     internet: 'Contas',
-    telefone: 'Contas',
-    celular: 'Contas',
-    streaming: 'Contas',
     netflix: 'Contas',
-    spotify: 'Contas',
-    amazon: 'Contas',
-    educacao: 'Educacao',
-    escola: 'Educacao',
-    faculdade: 'Educacao',
-    curso: 'Educacao',
-    livro: 'Educacao',
-    material: 'Educacao',
-    roupa: 'Vestuario',
-    vestuario: 'Vestuario',
-    sapato: 'Vestuario',
-    tenis: 'Vestuario',
-    pet: 'Pet',
-    vet: 'Pet',
-    veterinario: 'Pet',
-    racao: 'Pet',
+    salario: 'Salario',
+    freelance: 'Freelance',
 };
 
-const INTENT_GROUPS = [
-    {
-        type: 'receivable',
-        patterns: [/\bvou\s+receber\b/, /\bvou\s+ganhar\b/, /\bespero\s+receber\b/, /\ba\s+receber\b/, /\btenho\s+a\s+receber\b/, /\bme\s+devem\b/, /\bme\s+pagam\b/, /\bvao\s+me\s+pagar\b/, /\bestou\s+para\s+receber\b/, /\btenho\s+um\s+pix\s+para\s+receber\b/, /\bvalor\s+a\s+receber\b/],
-        skip: ['vou', 'receber', 'ganhar', 'espero', 'a', 'tenho', 'me', 'devem', 'pagam', 'vao', 'pagar', 'estou', 'para', 'um', 'pix', 'valor'],
-    },
-    {
-        type: 'income',
-        patterns: [/\brecebi\b/, /\bganhei\b/, /\bentrou\b/, /\bdepositaram\b/, /\bme\s+pagaram\b/, /\bme\s+depositaram\b/, /\bcaiu\s+na\s+conta\b/, /\bcaiu\b/, /\bvendi\b/, /\bfiz\s+uma?\s+venda\b/, /\brecebimento\b/, /\bentrada\s+de\b/, /\bentrou\s+um\s+pix\b/, /\breceita\s+de\b/, /\bme\s+fizeram\s+um\s+pix\b/, /\bpix\s+recebido\b/],
-        skip: ['recebi', 'ganhei', 'entrou', 'depositaram', 'me', 'pagaram', 'caiu', 'na', 'conta', 'vendi', 'fiz', 'uma', 'venda', 'recebimento', 'entrada', 'de', 'um', 'pix', 'receita', 'fizeram', 'recebido'],
-    },
-    {
-        type: 'expense',
-        patterns: [/\bgastei\b/, /\bpaguei\b/, /\bcomprei\b/, /\bsaiu\b/, /\bgasto\s+de\b/, /\btirei\s+da\s+conta\b/, /\bdebitou\b/, /\bdesembolsei\b/, /\bfiz\s+um\s+gasto\b/, /\bdespesa\s+de\b/, /\bgastei\s+com\b/, /\bpaguei\s+por\b/, /\bsaida\s+de\b/, /\bpix\s+enviado\b/],
-        skip: ['gastei', 'paguei', 'comprei', 'saiu', 'gasto', 'de', 'tirei', 'da', 'conta', 'debitou', 'desembolsei', 'fiz', 'um', 'despesa', 'com', 'por', 'saida', 'pix', 'enviado'],
-    },
-    {
-        type: 'debt',
-        patterns: [/\btenho\s+que\s+pagar\b/, /\bpreciso\s+pagar\b/, /\bdevo\s+pagar\b/, /\bdevo\b/, /\bpagar\b/, /\bboleto\b/, /\bparcela\b/, /\bprestacao\b/, /\bvence\b/, /\bvencimento\b/, /\bconta\s+a\s+pagar\b/, /\bemprestimo\b/, /\bfinanciamento\b/, /\bcartao\b/, /\bfatura\b/, /\bparcelei\b/, /\btenho\s+uma\s+conta\b/, /\bconta\s+pendente\b/, /\bconta\s+para\s+pagar\b/],
-        skip: ['pagar', 'tenho', 'que', 'preciso', 'devo', 'boleto', 'parcela', 'prestacao', 'vence', 'emprestimo', 'financiamento', 'cartao', 'fatura', 'parcelei', 'uma', 'conta', 'pendente', 'para'],
-    },
+/* ─────────────────────────────────────────
+   INTENTS
+───────────────────────────────────────── */
+const INTENTS = {
+    income: /\b(recebi|ganhei|entrou|pix recebido|caiu)\b/,
+    expense: /\b(gastei|paguei|comprei|debito|pix enviado)\b/,
+    debt: /\b(pagar|boleto|fatura|cartao|parcela)\b/,
+    receivable: /\b(receber|me devem|vao pagar)\b/,
+};
+
+/* ─────────────────────────────────────────
+   STOPWORDS
+───────────────────────────────────────── */
+const STOPWORDS = [
+    'de','do','da','no','na','com','por','para','um','uma','o','a'
 ];
 
+/* ─────────────────────────────────────────
+   PARSER
+───────────────────────────────────────── */
 export class FinanceParser {
+
     parse(text) {
-        const lower = norm(text);
-        const management = this.detectManagement(lower);
-        if (management) return management;
+        const cleaned = norm(text);
 
-        for (const group of INTENT_GROUPS) {
-            if (group.patterns.some((pattern) => pattern.test(lower))) {
-                const value = this.extractValue(text);
-                if (!value) return { type: 'no_value', intentType: group.type, raw: text };
+        // comandos primeiro
+        const cmd = this.detectCommand(cleaned);
+        if (cmd) return cmd;
 
-                return {
-                    type: group.type,
-                    value,
-                    description: this.buildDescription(text, group.skip),
-                    category: this.detectCategory(text),
-                    raw: text,
-                };
-            }
-        }
+        // múltiplas transações
+        const parts = this.splitTransactions(text);
 
-        const onlyValue = this.extractValue(text);
-        if (onlyValue && /^[\sR$\d.,]+$/.test(text.trim())) {
-            return { type: 'only_value', value: onlyValue, raw: text };
-        }
+        const results = parts.map(part => this.parseSingle(part));
 
-        return { type: 'unknown', raw: text };
+        return results.length === 1 ? results[0] : {
+            type: 'multi',
+            items: results
+        };
     }
 
-    detectManagement(lower) {
-        if (/\b(apagar|deletar|remover|excluir)\b.*(ultimo|last)\b/.test(lower)) return { type: 'cmd_delete_last' };
-        if (/\b(saldo|total|resumo|quanto\s+tenho)\b/.test(lower)) return { type: 'cmd_summary' };
-        if (/\b(ajuda|help|como\s+usar|exemplos|comandos)\b/.test(lower)) return { type: 'cmd_help' };
-        if (/\b(ultimas|ultimos|recentes)\b.*\b(transacoes|lancamentos)\b|\b(transacoes|lancamentos)\b.*\b(recentes)\b|\bo\s+que\s+eu\s+lancei\s+por\s+ultimo\b/.test(lower)) return { type: 'cmd_recent' };
-        if (/\b(listar|mostrar|ver|quais\s+sao|me\s+mostra)\b.*\b(gastos|despesas)\b|\bmeus\s+(gastos|despesas)\b/.test(lower)) return { type: 'cmd_list_expenses' };
-        if (/\b(listar|mostrar|ver|quais\s+sao|me\s+mostra)\b.*\b(receitas|ganhos|entradas)\b|\bminhas\s+(receitas|entradas)\b/.test(lower)) return { type: 'cmd_list_income' };
-        if (/\b(listar|mostrar|ver|quais\s+sao|me\s+mostra)\b.*\b(a pagar|dividas|boletos)\b|\bo\s+que\s+tenho\s+para\s+pagar\b/.test(lower)) return { type: 'cmd_list_debts' };
-        if (/\b(listar|mostrar|ver|quais\s+sao|me\s+mostra)\b.*\b(a receber|recebiveis)\b|\bo\s+que\s+tenho\s+para\s+receber\b/.test(lower)) return { type: 'cmd_list_receivables' };
-        return null;
+    /* ───────────────────────────── */
+    parseSingle(text) {
+        const cleaned = norm(text);
+
+        const value = this.extractValue(text);
+        const type = this.detectIntent(cleaned, value);
+        const category = this.detectCategory(cleaned);
+        const date = this.extractDate(cleaned);
+
+        if (!value) {
+            return { type: 'no_value', raw: text };
+        }
+
+        return {
+            type,
+            value,
+            category,
+            date: date.format('YYYY-MM-DD'),
+            description: this.buildDescription(text),
+            raw: text
+        };
     }
 
+    /* ───────────────────────────── */
+    detectIntent(text, value) {
+        for (const [type, regex] of Object.entries(INTENTS)) {
+            if (regex.test(text)) return type;
+        }
+
+        // inferência automática
+        if (value) return 'expense';
+
+        return 'unknown';
+    }
+
+    /* ───────────────────────────── */
     detectCategory(text) {
-        const words = norm(text).split(/[\s,.\-_/]+/);
+        const words = text.split(/\s+/);
+
+        const learned = JSON.parse(localStorage.getItem('learnedCategories') || '{}');
+
+        const scores = {};
 
         for (const word of words) {
-            if (CATEGORIES[word]) return CATEGORIES[word];
-        }
 
-        for (const word of words) {
-            if (word.length < 4) continue;
-            for (const [key, category] of Object.entries(CATEGORIES)) {
-                if (key.length >= 4 && word.includes(key)) return category;
+            if (learned[word]) {
+                return learned[word];
+            }
+
+            for (const [key, cat] of Object.entries(BASE_CATEGORIES)) {
+                if (word.includes(key)) {
+                    scores[cat] = (scores[cat] || 0) + 1;
+                }
             }
         }
 
-        return 'Geral';
+        const best = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
+
+        return best ? best[0] : 'Geral';
     }
 
+    /* ───────────────────────────── */
     extractValue(text) {
-        const source = text.replace(/R\$\s*/gi, '').replace(/reais/gi, '');
-        const found = [];
 
-        const ptBr = /\b(\d[\d.]*),(\d{1,2})\b/g;
+        // padrão 2x 50
+        const multi = text.match(/(\d+)\s*x\s*(\d+)/i);
+        if (multi) {
+            return parseFloat(multi[1]) * parseFloat(multi[2]);
+        }
+
+        const source = text.replace(/R\$\s*/gi, '');
+
+        const numbers = [];
+
+        const regex = /\d+[.,]?\d*/g;
         let match;
-        while ((match = ptBr.exec(source)) !== null) {
-            const integer = match[1].replace(/\./g, '');
-            const value = parseFloat(integer + '.' + match[2]);
-            if (!Number.isNaN(value)) found.push(value);
+
+        while ((match = regex.exec(source))) {
+            const val = parseFloat(match[0].replace(',', '.'));
+            if (!isNaN(val)) numbers.push(val);
         }
 
-        const enUs = /\b(\d[\d,]*)\.(\d{1,2})(?!\d)\b/g;
-        while ((match = enUs.exec(source)) !== null) {
-            const integer = match[1].replace(/,/g, '');
-            const value = parseFloat(integer + '.' + match[2]);
-            if (!Number.isNaN(value)) found.push(value);
-        }
+        if (!numbers.length) return null;
 
-        if (found.length) return Math.max(...found);
+        return Math.max(...numbers);
+    }
 
-        const thousand = /\b(\d{1,3}(?:\.\d{3})+)\b/g;
-        while ((match = thousand.exec(source)) !== null) {
-            found.push(parseFloat(match[1].replace(/\./g, '')));
-        }
-        if (found.length) return Math.max(...found);
+    /* ───────────────────────────── */
+    extractDate(text) {
+        if (text.includes('ontem')) return dayjs().subtract(1, 'day');
+        if (text.includes('amanha')) return dayjs().add(1, 'day');
+        if (text.includes('hoje')) return dayjs();
 
-        const integer = /\b(\d+)\b/g;
-        while ((match = integer.exec(source)) !== null) {
-            found.push(parseFloat(match[1]));
-        }
-        if (found.length) return Math.max(...found);
+        return dayjs();
+    }
+
+    /* ───────────────────────────── */
+    splitTransactions(text) {
+        return text.split(/\be\b|,/gi).map(t => t.trim()).filter(Boolean);
+    }
+
+    /* ───────────────────────────── */
+    buildDescription(text) {
+
+        let cleaned = text
+            .replace(/R\$\s*[\d.,]+/gi, '')
+            .replace(/\d+[.,]?\d*/g, '');
+
+        const words = norm(cleaned).split(/\s+/);
+
+        return words
+            .filter(w => !STOPWORDS.includes(w))
+            .join(' ')
+            .trim() || '-';
+    }
+
+    /* ───────────────────────────── */
+    detectCommand(text) {
+        if (/\b(saldo|total)\b/.test(text)) return { type: 'cmd_summary' };
+        if (/\b(apagar|deletar).*(ultimo)\b/.test(text)) return { type: 'cmd_delete_last' };
+        if (/\b(ajuda|help)\b/.test(text)) return { type: 'cmd_help' };
 
         return null;
-    }
-
-    buildDescription(text, skipWords = []) {
-        let description = text
-            .replace(/R\$\s*[\d.,]+/gi, '')
-            .replace(/\b\d[\d.,]*\b/g, '')
-            .replace(/\breais\b/gi, '');
-
-        if (skipWords.length) {
-            const escaped = skipWords.map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-            description = description.replace(new RegExp(`\\b(${escaped.join('|')})\\b`, 'gi'), '');
-        }
-
-        return description
-            .replace(/\s{2,}/g, ' ')
-            .replace(/^[\s,.\-:]+|[\s,.\-:]+$/g, '')
-            .trim() || '-';
     }
 }
