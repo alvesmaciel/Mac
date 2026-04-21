@@ -18,6 +18,7 @@ export class SmartAlerts {
      * Gera alertas para uma nova transação
      */
     generateAlertsForTransaction(transaction) {
+        if (!this.alertsEnabled) return [];
         const alerts = [];
 
         // Alerta 1: Duplicata detectada
@@ -85,12 +86,12 @@ export class SmartAlerts {
         }
 
         // Alerta 5: Transação com valor muito grande
-        const avgValue = this.store.getAllTransactions()
-            .filter(tx => tx.type === transaction.type)
-            .reduce((sum, tx) => sum + tx.value, 0) / 
-            this.store.getAllTransactions().filter(tx => tx.type === transaction.type).length;
+        const sameTypeTransactions = this.store.getAllTransactions().filter(tx => tx.type === transaction.type);
+        const avgValue = sameTypeTransactions.length
+            ? sameTypeTransactions.reduce((sum, tx) => sum + tx.value, 0) / sameTypeTransactions.length
+            : 0;
 
-        if (transaction.value > avgValue * 3) {
+        if (avgValue > 0 && transaction.value > avgValue * 3) {
             alerts.push(this.createAlert(
                 'high_value',
                 '💰 Transação de alto valor',
@@ -101,6 +102,10 @@ export class SmartAlerts {
 
         this.addAlerts(alerts);
         return alerts;
+    }
+
+    runChecks(transaction) {
+        return this.generateAlertsForTransaction(transaction);
     }
 
     /**

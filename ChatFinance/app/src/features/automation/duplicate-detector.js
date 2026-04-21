@@ -26,12 +26,16 @@ export class DuplicateDetector {
         });
 
         for (const existingTx of recentTransactions) {
+            if (newTransaction.id && existingTx.id === newTransaction.id) {
+                continue;
+            }
             const similarity = this.calculateSimilarity(newTransaction, existingTx);
             
             if (similarity >= this.sensitivity) {
                 return {
                     transaction: existingTx,
                     similarity: similarity,
+                    similarityLabel: `${Math.round(similarity * 100)}%`,
                     timeDiff: this.getTimeDifference(newTransaction.timestamp, existingTx.timestamp),
                 };
             }

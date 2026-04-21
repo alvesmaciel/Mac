@@ -1,310 +1,208 @@
-/**
- * Message Actions Module - Edit, Delete, Copy
- * Adiciona funcionalidades aos bubbles de chat
- */
-
 import { appStorage } from '../../shared/storage.js';
 
 export class MessageActions {
-    constructor() {
-        this.editingId = null;
-        this.messages = appStorage.get('chatMessages') || [];
-    }
-
-    /**
-     * Gera ID único para mensagem
-     */
     generateMessageId() {
-        return `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+        return `msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     }
 
     linkTransactionToMessage(messageEl, transactionId) {
-    messageEl.setAttribute('data-transaction-id', transactionId);
-}
-
-    /**
-     * Cria bubble com ID e atributos data
-     */
-    createMessageBubble(html, type = 'user', originalId = null) {
-    const messageId = originalId || this.generateMessageId();
-    
-    const div = document.createElement('div');
-    div.className = `msg msg--${type}`;
-    div.setAttribute('data-message-id', messageId);
-
-    const bubble = document.createElement('div');
-    bubble.className = 'msg-bubble';
-
-    // 🔥 conteúdo separado
-    const content = document.createElement('div');
-    content.className = 'msg-content';
-    content.innerHTML = html;
-
-    bubble.appendChild(content);
-    
-
-    // 🔥 ações FORA do conteúdo
-    if (type === 'user') {
-        const actions = this.createActionButtons(messageId);
-        div.appendChild(actions); // ⬅️ AQUI MUDA
+        if (messageEl) {
+            messageEl.setAttribute('data-transaction-id', transactionId);
+        }
     }
 
-    div.appendChild(bubble);
+    createMessageBubble(html, type = 'user', originalId = null, author = null) {
+        const messageId = originalId || this.generateMessageId();
+        const wrapper = document.createElement('div');
+        wrapper.className = `msg msg--${type}`;
+        wrapper.setAttribute('data-message-id', messageId);
 
-    return { element: div, id: messageId };
-}
+        const bubble = document.createElement('div');
+        bubble.className = 'msg-bubble';
 
+        if (author) {
+            const meta = document.createElement('div');
+            meta.className = 'msg-author';
+            meta.textContent = author;
+            bubble.appendChild(meta);
+        }
 
-    /**
-     * Cria botões de ação (Edit, Delete, Copy)
-     */
+        const content = document.createElement('div');
+        content.className = 'msg-content';
+        content.innerHTML = html;
+        bubble.appendChild(content);
+        wrapper.appendChild(bubble);
+
+        if (type === 'user') {
+            wrapper.appendChild(this.createActionButtons(messageId));
+        }
+
+        return { element: wrapper, id: messageId };
+    }
+
     createActionButtons(messageId) {
         const container = document.createElement('div');
         container.className = 'msg-actions';
 
-        // Botão Edit
         const editBtn = document.createElement('button');
         editBtn.className = 'msg-action-btn msg-action-edit';
-        editBtn.innerHTML = '✏️ Editar';
-        editBtn.title = 'Editar esta mensagem';
+        editBtn.type = 'button';
+        editBtn.textContent = 'Editar';
         editBtn.addEventListener('click', () => this.onEditClick(messageId));
 
-        // Botão Delete
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'msg-action-btn msg-action-delete';
-        deleteBtn.innerHTML = '🗑️ Excluir';
-        deleteBtn.title = 'Excluir esta mensagem';
+        deleteBtn.type = 'button';
+        deleteBtn.textContent = 'Excluir';
         deleteBtn.addEventListener('click', () => this.onDeleteClick(messageId));
 
-        // Botão Copy
         const copyBtn = document.createElement('button');
         copyBtn.className = 'msg-action-btn msg-action-copy';
-        copyBtn.innerHTML = '📋 Copiar';
-        copyBtn.title = 'Copiar texto';
+        copyBtn.type = 'button';
+        copyBtn.textContent = 'Copiar';
         copyBtn.addEventListener('click', () => this.onCopyClick(messageId));
 
         container.appendChild(editBtn);
         container.appendChild(deleteBtn);
         container.appendChild(copyBtn);
-
         return container;
     }
 
-    /**
-     * Handler para Edit
-     */
     onEditClick(messageId) {
-    const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
-    if (!messageEl) return;
-
-    const content = messageEl.querySelector('.msg-content');
-    const actions = messageEl.querySelector('.msg-actions');
-
-    const originalText = content.textContent.trim();
-
-    if (actions) actions.style.display = 'none';
-
-    const editForm = document.createElement('div');
-    editForm.className = 'msg-edit-form';
-
-    editForm.innerHTML = `
-        <textarea class="msg-edit-input">${originalText}</textarea>
-        <div class="msg-edit-buttons">
-            <button class="msg-edit-save">Salvar</button>
-            <button class="msg-edit-cancel">Cancelar</button>
-        </div>
-    `;
-
-    content.innerHTML = '';
-    content.appendChild(editForm);
-
-    const textarea = editForm.querySelector('textarea');
-    textarea.focus();
-
-    editForm.querySelector('.msg-edit-save').onclick = () => {
-        const newText = textarea.value.trim();
-        this.saveEdit(messageId, newText);
-    };
-
-    editForm.querySelector('.msg-edit-cancel').onclick = () => {
-        content.textContent = originalText;
-        if (actions) actions.style.display = 'flex';
-    };
-}
-
-    /**
-     * Salva edição da mensagem
-     */
-    saveEdit(messageId, newText) {
-    const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
-    if (!messageEl) return;
-
-    const content = messageEl.querySelector('.msg-content');
-    const actions = messageEl.querySelector('.msg-actions');
-
-    content.textContent = newText;
-
-    if (actions) actions.style.display = 'flex';
-
-    // 🔥 REPROCESSA (ESSA É A PARTE QUE FALTAVA)
-    this.reprocessMessage(
-        messageId,
-        newText,
-        window.app.parser,
-        window.app.store,
-        window.app.renderAll
-    );
-
-    this.updateMessageInStorage(messageId, newText);
-
-// 🚀 dispara evento global
-window.dispatchEvent(new CustomEvent('messageEdited', {
-    detail: { messageId, newText }
-}));
-}
-
-    /**
-     * Handler para Delete
-     */
-    onDeleteClick(messageId) {
         const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
         if (!messageEl) return;
 
-        if (confirm('Tem certeza que deseja excluir esta mensagem?')) {
-            // Fade out animation
-            messageEl.style.opacity = '0';
-            messageEl.style.transform = 'translateX(-20px)';
-            messageEl.style.transition = 'all 0.3s ease';
+        const content = messageEl.querySelector('.msg-content');
+        const actions = messageEl.querySelector('.msg-actions');
+        const originalText = content.textContent.trim();
 
+        if (actions) actions.style.display = 'none';
+
+        content.innerHTML = `
+            <div class="msg-edit-form">
+                <textarea class="msg-edit-input">${originalText}</textarea>
+                <div class="msg-edit-buttons">
+                    <button class="msg-edit-save" type="button">Salvar</button>
+                    <button class="msg-edit-cancel" type="button">Cancelar</button>
+                </div>
+            </div>
+        `;
+
+        const textarea = content.querySelector('.msg-edit-input');
+        textarea.focus();
+
+        content.querySelector('.msg-edit-save').addEventListener('click', () => {
+            const newText = textarea.value.trim();
+            this.saveEdit(messageId, newText);
+        });
+
+        content.querySelector('.msg-edit-cancel').addEventListener('click', () => {
+            content.textContent = originalText;
+            if (actions) actions.style.display = 'flex';
+        });
+    }
+
+    saveEdit(messageId, newText) {
+        const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
+        if (!messageEl) return;
+
+        const content = messageEl.querySelector('.msg-content');
+        const actions = messageEl.querySelector('.msg-actions');
+        const transactionId = messageEl.getAttribute('data-transaction-id');
+
+        content.textContent = newText;
+        if (actions) actions.style.display = 'flex';
+
+        this.updateMessageInStorage(messageId, newText);
+
+        window.dispatchEvent(new CustomEvent('chatMessageEdited', {
+            detail: { messageId, newText, transactionId },
+        }));
+    }
+
+    onDeleteClick(messageId) {
+        const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
+        if (!messageEl) return;
+        if (!confirm('Deseja excluir esta mensagem?')) return;
+
+        const transactionId = messageEl.getAttribute('data-transaction-id');
+        messageEl.remove();
+        this.removeMessageFromStorage(messageId);
+
+        window.dispatchEvent(new CustomEvent('chatMessageDeleted', {
+            detail: { messageId, transactionId },
+        }));
+    }
+
+    async onCopyClick(messageId) {
+        const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
+        if (!messageEl) return;
+
+        const button = messageEl.querySelector('.msg-action-copy');
+        try {
+            await navigator.clipboard.writeText(messageEl.querySelector('.msg-content')?.textContent.trim() || '');
+            const previous = button.textContent;
+            button.textContent = 'Copiado';
             setTimeout(() => {
-                messageEl.remove();
-                this.removeMessageFromStorage(messageId);
-            }, 300);
+                button.textContent = previous;
+            }, 1200);
+        } catch (error) {
+            console.error('Erro ao copiar:', error);
         }
     }
 
-    /**
-     * Handler para Copy
-     */
-    async onCopyClick(messageId) {
-    const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
-    if (!messageEl) return;
-
-    const text = messageEl.querySelector('.msg-content').textContent.trim();
-
-    try {
-        await navigator.clipboard.writeText(text);
-
-        const copyBtn = messageEl.querySelector('.msg-action-copy');
-        const original = copyBtn.innerHTML;
-
-        copyBtn.innerHTML = '✅ Copiado!';
-        setTimeout(() => copyBtn.innerHTML = original, 1500);
-
-    } catch (error) {
-        console.error('Erro ao copiar:', error);
-    }
-    
-}
-
-
-    /**
-     * Atualiza mensagem no storage
-     */
     updateMessageInStorage(messageId, newText) {
         const messages = appStorage.get('chatMessages') || [];
-        const index = messages.findIndex(m => m.id === messageId);
+        const index = messages.findIndex((message) => message.id === messageId);
         if (index !== -1) {
-            messages[index].text = newText;
+            messages[index].html = newText;
             messages[index].edited = true;
-            messages[index].editedAt = new Date().toISOString();
             appStorage.set('chatMessages', messages);
         }
     }
 
-    /**
-     * Remove mensagem do storage
-     */
     removeMessageFromStorage(messageId) {
         const messages = appStorage.get('chatMessages') || [];
-        const filtered = messages.filter(m => m.id !== messageId);
-        appStorage.set('chatMessages', filtered);
+        appStorage.set('chatMessages', messages.filter((message) => message.id !== messageId));
     }
 
-    /**
-     * Persiste todas as mensagens
-     */
     saveAllMessages(messagesEl) {
         const messages = [];
-        messagesEl.querySelectorAll('.msg').forEach(el => {
-            const id = el.getAttribute('data-message-id');
-            const type = el.classList.contains('msg--user') ? 'user' : 'response';
-            const text = el.querySelector('.msg-bubble')?.textContent.trim() || '';
-            
+        messagesEl.querySelectorAll('.msg').forEach((el) => {
             messages.push({
-                id,
-                type,
-                text,
-                timestamp: new Date().toISOString(),
+                id: el.getAttribute('data-message-id'),
+                type: el.classList.contains('msg--user') ? 'user' : 'response',
+                html: el.querySelector('.msg-content')?.innerHTML || '',
+                author: el.querySelector('.msg-author')?.textContent || '',
+                transactionId: el.getAttribute('data-transaction-id') || null,
             });
         });
 
         appStorage.set('chatMessages', messages);
-        return messages;
     }
 
-    /**
-     * Restaura mensagens do storage
-     */
-    async restoreMessages(messagesEl) {
+    restoreMessages(messagesEl) {
         const messages = appStorage.get('chatMessages') || [];
-        
-        if (messages.length === 0) return;
+        if (!messages.length) return false;
 
         messagesEl.innerHTML = '';
 
-        for (const msg of messages) {
-            const { element } = this.createMessageBubble(msg.text, msg.type, msg.id);
+        messages.forEach((msg) => {
+            const { element } = this.createMessageBubble(msg.html, msg.type, msg.id, msg.author);
+            if (msg.transactionId) {
+                element.setAttribute('data-transaction-id', msg.transactionId);
+            }
             messagesEl.appendChild(element);
-        }
+        });
 
         messagesEl.scrollTop = messagesEl.scrollHeight;
+        return true;
     }
 
-    /**
-     * Limpa todas as mensagens
-     */
     clearAll(messagesEl) {
         messagesEl.innerHTML = '';
         appStorage.remove('chatMessages');
     }
-
-    reprocessMessage(messageId, newText, parser, store, onUpdate) {
-    const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
-    if (!messageEl) return;
-
-    const oldTxId = messageEl.getAttribute('data-transaction-id');
-
-    // 🔥 remove transação antiga
-    if (oldTxId) {
-        store.deleteTransactionById(oldTxId);
-    }
-
-    // 🔥 parse novo texto
-    const parsed = parser.parse(newText);
-
-    if (!parsed || !parsed.value) return;
-
-    // 🔥 adiciona nova
-    const newTx = store.addTransaction(parsed);
-
-    // 🔥 atualiza vínculo
-    messageEl.setAttribute('data-transaction-id', newTx.id);
-
-    // 🔥 atualiza dashboard
-    onUpdate?.();
-}
-
 }
 
 export const messageActions = new MessageActions();

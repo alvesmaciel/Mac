@@ -1353,3 +1353,71 @@ html.dark .tx-row-dirty {
         justify-content: flex-start;
     }
 }
+
+.msg-author {
+    display: block;
+    margin-bottom: .32rem;
+    font-size: .66rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    opacity: .68;
+}
+
+.dash-subtitle {
+    margin-top: .45rem;
+    color: var(--ink-muted);
+    font-size: .84rem;
+    max-width: 680px;
+    line-height: 1.5;
+}
+
+.dashboard-view-switch {
+    display: flex;
+    gap: .55rem;
+    flex-wrap: wrap;
+}
+
+.graph-toggle-btn.is-active {
+    border-color: var(--ink);
+    color: var(--ink);
+    box-shadow: var(--shadow-sm);
+}
+
+.dashboard-view {
+    background: var(--panel-bg);
+    border: 1.5px solid var(--cream-dark);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: 1.5rem;
+}
+
+.tx-date-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: .22rem .55rem;
+    border-radius: 999px;
+    background: var(--cream-dark);
+    color: var(--ink-muted);
+    font-size: .7rem;
+    font-family: var(--font-mono);
+}
+
+.tx-table th:nth-child(2),
+.tx-table td:nth-child(2) {
+    width: 120px;
+}
+
+.tx-table th:nth-child(4),
+.tx-table td:nth-child(4) {
+    width: 170px;
+}
+
+.tx-table th:nth-child(5),
+.tx-table td:nth-child(5) {
+    width: 150px;
+}
+
+.tx-table th:nth-child(6),
+.tx-table td:nth-child(6) {
+    width: 150px;
+}

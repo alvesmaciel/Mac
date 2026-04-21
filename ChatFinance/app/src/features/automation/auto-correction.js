@@ -67,6 +67,10 @@ export class AutoCorrection {
         return corrected;
     }
 
+    correct(text) {
+        return this.correctText(text);
+    }
+
     /**
      * Corrige pontuação
      */

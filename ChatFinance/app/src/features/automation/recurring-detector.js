@@ -259,6 +259,13 @@ export class RecurringDetector {
 
         return recurring.sort((a, b) => b.confidence - a.confidence);
     }
+
+    analyze(transaction) {
+        if (!transaction?.category || !transaction?.type) return [];
+        const detected = this.detectRecurring(transaction.category, transaction.type, 3);
+        if (!detected || detected.confidence < 0.6) return [];
+        return [detected];
+    }
 }
 
 export const recurringDetector = null;

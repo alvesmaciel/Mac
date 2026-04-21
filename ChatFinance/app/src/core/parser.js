@@ -67,6 +67,10 @@ export class FinanceParser {
         const category = this.detectCategory(cleaned);
         const date = this.extractDate(cleaned);
 
+        if (!value && type?.startsWith('cmd_')) {
+            return { type, raw: text };
+        }
+
         if (!value) {
             return { type: 'no_value', raw: text };
         }
@@ -156,7 +160,7 @@ export class FinanceParser {
 
     /* ───────────────────────────── */
     splitTransactions(text) {
-        return text.split(/\be\b|,/gi).map(t => t.trim()).filter(Boolean);
+        return text.split(/\s+e\s+|;/gi).map(t => t.trim()).filter(Boolean);
     }
 
     /* ───────────────────────────── */
@@ -177,6 +181,7 @@ export class FinanceParser {
     /* ───────────────────────────── */
     detectCommand(text) {
         if (/\b(saldo|total)\b/.test(text)) return { type: 'cmd_summary' };
+        if (/\b(ultimas?|recentes?)\b.*\b(transacoes|lancamentos)\b/.test(text)) return { type: 'cmd_recent' };
         if (/\b(apagar|deletar).*(ultimo)\b/.test(text)) return { type: 'cmd_delete_last' };
         if (/\b(ajuda|help)\b/.test(text)) return { type: 'cmd_help' };
 

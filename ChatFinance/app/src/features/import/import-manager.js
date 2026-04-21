@@ -1,8 +1,3 @@
-/**
- * Import Manager - Gerenciador central de importações
- * Suporta CSV, PDF e OCR com histórico de importações
- */
-
 import { appStorage } from '../../shared/storage.js';
 import { csvParser } from './csv-parser.js';
 
@@ -10,16 +5,13 @@ export class ImportManager {
     constructor(store) {
         this.store = store;
         this.importHistory = appStorage.get('importHistory') || [];
-        this.duplicateStrategy = 'skip'; // 'skip' | 'merge' | 'replace'
+        this.duplicateStrategy = 'skip';
     }
 
-    /**
-     * Importa arquivo baseado no tipo
-     */
     async importFile(file, options = {}) {
         const type = this.detectFileType(file);
         if (!type) {
-            return { error: 'Tipo de arquivo não suportado' };
+            return { success: false, error: 'Tipo de arquivo nao suportado.' };
         }
 
         try {
@@ -33,28 +25,25 @@ export class ImportManager {
                     result = await this.importPDF(file, options);
                     break;
                 default:
-                    return { error: 'Tipo não implementado' };
+                    return { success: false, error: 'Tipo ainda nao implementado.' };
             }
 
-            if (result.success) {
+            if (result.success && !options.previewOnly) {
                 this.recordImport({
                     type,
                     filename: file.name,
                     size: file.size,
-                    transactionsCount: result.total || result.transactions.length,
+                    transactionsCount: result.total || 0,
                     timestamp: Date.now(),
                 });
             }
 
             return result;
         } catch (error) {
-            return { error: error.message };
+            return { success: false, error: error.message };
         }
     }
 
-    /**
-     * Detecta tipo de arquivo
-     */
     detectFileType(file) {
         const name = file.name.toLowerCase();
         const mime = file.type;
@@ -63,19 +52,15 @@ export class ImportManager {
         if (name.endsWith('.pdf') || mime === 'application/pdf') return 'pdf';
         if (name.endsWith('.xlsx') || name.endsWith('.xls')) return 'excel';
         if (name.endsWith('.txt')) return 'txt';
-
         return null;
     }
 
-    /**
-     * Importa arquivo CSV
-     */
     async importCSV(file, options = {}) {
         const content = await this.readFileAsText(file);
         const result = csvParser.parse(content);
 
         if (!result.success) {
-            return { error: 'Erro ao processar CSV' };
+            return { success: false, error: 'Erro ao processar CSV.' };
         }
 
         return this.processTransactions(result.transactions, {
@@ -85,28 +70,20 @@ export class ImportManager {
         });
     }
 
-    /**
-     * Importa arquivo PDF
-     * Nota: Requer bibliotecas externas (pdfjs, pdfextract, etc)
-     */
-    async importPDF(file, options = {}) {
-        // Implementação futura com biblioteca PDF.js
+    async importPDF() {
         return {
-            error: 'Importação de PDF requer configuração. Use CSV por enquanto.',
-            suggestion: 'Converta seu PDF para CSV ou tente OCR',
+            success: false,
+            error: 'Importacao de PDF ainda nao esta implementada. Use CSV por enquanto.',
+            suggestion: 'Converta o PDF para CSV ate a integracao com leitor de fatura ser adicionada.',
         };
     }
 
-    /**
-     * Processa transações importadas
-     */
     async processTransactions(transactions, metadata = {}) {
         const duplicates = [];
         const imported = [];
         const skipped = [];
 
         for (const tx of transactions) {
-            // Verifica duplicata
             const duplicate = this.findDuplicate(tx);
 
             if (duplicate && this.duplicateStrategy === 'skip') {
@@ -116,19 +93,23 @@ export class ImportManager {
                     reason: 'Duplicata encontrada',
                 });
             } else if (duplicate && this.duplicateStrategy === 'merge') {
-                // Mescla dados se forem consistentes
-                const merged = { ...duplicate, ...tx };
-                this.store.updateTransaction(duplicate.id, merged);
-                imported.push(merged);
-                duplicates.push(duplicate);
+                if (metadata.previewOnly) {
+                    imported.push({ ...duplicate, ...tx });
+                    duplicates.push(duplicate);
+                } else {
+                    const merged = { ...duplicate, ...tx, type: tx.type || duplicate.type };
+                    this.store.updateTransaction(duplicate.id, merged);
+                    imported.push(merged);
+                    duplicates.push(duplicate);
+                }
             } else {
-                // Adiciona nova transação
-                const added = this.store.addTransaction(tx);
-                imported.push(added);
+                imported.push(metadata.previewOnly ? tx : this.store.addTransaction(tx));
             }
         }
 
-        this.store.save();
+        if (!metadata.previewOnly) {
+            this.store.save();
+        }
 
         return {
             success: true,
@@ -146,62 +127,38 @@ export class ImportManager {
         };
     }
 
-    /**
-     * Encontra transação duplicada
-     */
     findDuplicate(transaction) {
-        const allTx = this.store.getAllTransactions();
-
-        for (const existing of allTx) {
-            // Verifica similaridade
-            if (
-                existing.type === transaction.type &&
-                Math.abs(existing.value - transaction.value) < 0.01 &&
-                existing.category === transaction.category &&
-                this.dateSimilar(existing.timestamp, transaction.timestamp)
-            ) {
-                return existing;
-            }
-        }
-
-        return null;
+        return this.store.getAllTransactions().find((existing) => (
+            existing.type === transaction.type &&
+            Math.abs(existing.value - transaction.value) < 0.01 &&
+            existing.category === transaction.category &&
+            this.dateSimilar(existing.timestamp, transaction.timestamp)
+        )) || null;
     }
 
-    /**
-     * Verifica se datas são similares (mesmo dia)
-     */
     dateSimilar(ts1, ts2) {
         const date1 = new Date(ts1 || Date.now());
         const date2 = new Date(ts2 || Date.now());
-
         date1.setHours(0, 0, 0, 0);
         date2.setHours(0, 0, 0, 0);
-
         return date1.getTime() === date2.getTime();
     }
 
-    /**
-     * Lê arquivo como texto
-     */
     readFileAsText(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
-            reader.onload = (e) => resolve(e.target.result);
-            reader.onerror = (e) => reject(new Error('Erro ao ler arquivo'));
+            reader.onload = (event) => resolve(event.target.result);
+            reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
             reader.readAsText(file);
         });
     }
 
-    /**
-     * Registra importação no histórico
-     */
     recordImport(data) {
         this.importHistory.push({
-            id: `import_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+            id: `import_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
             ...data,
         });
 
-        // Mantém apenas últimas 50 importações
         if (this.importHistory.length > 50) {
             this.importHistory = this.importHistory.slice(-50);
         }
@@ -209,32 +166,17 @@ export class ImportManager {
         this.save();
     }
 
-    /**
-     * Retorna histórico de importações
-     */
     getImportHistory() {
         return this.importHistory;
     }
 
-    /**
-     * Desfaz última importação
-     */
     undoLastImport() {
         if (this.importHistory.length === 0) return false;
-
-        const lastImport = this.importHistory[this.importHistory.length - 1];
-        // TODO: Implementar rollback de transações
-        // Por enquanto, apenas remove do histórico
-
         this.importHistory.pop();
         this.save();
-
         return true;
     }
 
-    /**
-     * Define estratégia para duplicatas
-     */
     setDuplicateStrategy(strategy) {
         if (['skip', 'merge', 'replace'].includes(strategy)) {
             this.duplicateStrategy = strategy;
@@ -243,9 +185,6 @@ export class ImportManager {
         return false;
     }
 
-    /**
-     * Gera relatório de importação
-     */
     generateImportReport(importedTransactions) {
         const report = {
             totalTransactions: importedTransactions.length,
@@ -256,28 +195,19 @@ export class ImportManager {
         };
 
         const timestamps = [];
+        importedTransactions.forEach((tx) => {
+            if (!report.byType[tx.type]) report.byType[tx.type] = { count: 0, total: 0 };
+            if (!report.byCategory[tx.category]) report.byCategory[tx.category] = { count: 0, total: 0 };
 
-        importedTransactions.forEach(tx => {
-            // Por tipo
-            if (!report.byType[tx.type]) {
-                report.byType[tx.type] = { count: 0, total: 0 };
-            }
-            report.byType[tx.type].count++;
+            report.byType[tx.type].count += 1;
             report.byType[tx.type].total += tx.value;
-
-            // Por categoria
-            if (!report.byCategory[tx.category]) {
-                report.byCategory[tx.category] = { count: 0, total: 0 };
-            }
-            report.byCategory[tx.category].count++;
+            report.byCategory[tx.category].count += 1;
             report.byCategory[tx.category].total += tx.value;
-
-            // Total e datas
             report.totalAmount += tx.value;
             timestamps.push(tx.timestamp || Date.now());
         });
 
-        if (timestamps.length > 0) {
+        if (timestamps.length) {
             report.dateRange = {
                 from: new Date(Math.min(...timestamps)),
                 to: new Date(Math.max(...timestamps)),
@@ -287,21 +217,32 @@ export class ImportManager {
         return report;
     }
 
-    /**
-     * Salva configurações
-     */
     save() {
         appStorage.set('importHistory', this.importHistory);
     }
 
-    /**
-     * Retorna formatos suportados
-     */
     getSupportedFormats() {
         return [
-            { id: 'csv', name: 'CSV (Extrato Bancário)', icon: '📊' },
-            { id: 'pdf', name: 'PDF (Fatura)', icon: '📄', disabled: true },
-            { id: 'ocr', name: 'OCR (Recibo fotografado)', icon: '📸', disabled: true },
+            {
+                id: 'csv',
+                name: 'CSV (Extrato bancario)',
+                icon: 'CSV',
+                description: 'Ja habilitado para extratos e planilhas exportadas.',
+            },
+            {
+                id: 'pdf',
+                name: 'PDF (Fatura)',
+                icon: 'PDF',
+                disabled: true,
+                description: 'Leitura de fatura planejada para a proxima etapa.',
+            },
+            {
+                id: 'ocr',
+                name: 'OCR (Recibo)',
+                icon: 'OCR',
+                disabled: true,
+                description: 'Planejado para fotos e comprovantes.',
+            },
         ];
     }
 }

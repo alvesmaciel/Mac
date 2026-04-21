@@ -35,28 +35,31 @@ export class TransactionsTable {
 
         visibleTransactions.forEach((tx) => {
             const tr = document.createElement('tr');
+            const displayDate = new Date(tx.timestamp || tx.date || Date.now()).toLocaleDateString('pt-BR');
+
             tr.innerHTML = `
-<td class="tx-cell--type">
-  <select class="edit-type type-${tx.type}" data-id="${tx.id}">
-    <option value="income" ${tx.type === 'income' ? 'selected' : ''}>Receita</option>
-    <option value="expense" ${tx.type === 'expense' ? 'selected' : ''}>Gasto</option>
-    <option value="debt" ${tx.type === 'debt' ? 'selected' : ''}>A Pagar</option>
-    <option value="receivable" ${tx.type === 'receivable' ? 'selected' : ''}>A Receber</option>
-  </select>
-</td>
-<td><input class="edit-desc" data-id="${tx.id}" value="${escHtml(tx.description)}"></td>
-<td><input class="edit-cat" data-id="${tx.id}" value="${escHtml(tx.category)}"></td>
-<td class="tx-cell--amount">
-  <input class="edit-val" data-id="${tx.id}" value="${tx.value}">
-  <span class="tx-cell-preview">${formatBRL(tx.value)}</span>
-</td>
-<td class="tx-cell--actions">
-  <div class="tx-actions">
-    <button class="tx-action-btn save-edit-btn" data-id="${tx.id}" type="button">Salvar</button>
-    <button class="tx-action-btn delete-tx-btn" data-id="${tx.id}" data-type="${tx.type}" type="button">Excluir</button>
-  </div>
-</td>
-`;
+                <td class="tx-cell--type">
+                    <select class="edit-type type-${tx.type}" data-id="${tx.id}">
+                        <option value="income" ${tx.type === 'income' ? 'selected' : ''}>Receita</option>
+                        <option value="expense" ${tx.type === 'expense' ? 'selected' : ''}>Gasto</option>
+                        <option value="debt" ${tx.type === 'debt' ? 'selected' : ''}>A Pagar</option>
+                        <option value="receivable" ${tx.type === 'receivable' ? 'selected' : ''}>A Receber</option>
+                    </select>
+                </td>
+                <td><span class="tx-date-badge">${displayDate}</span></td>
+                <td><input class="edit-desc" data-id="${tx.id}" value="${escHtml(tx.description)}"></td>
+                <td><input class="edit-cat" data-id="${tx.id}" value="${escHtml(tx.category)}"></td>
+                <td class="tx-cell--amount">
+                    <input class="edit-val" data-id="${tx.id}" value="${tx.value}">
+                    <span class="tx-cell-preview">${formatBRL(tx.value)}</span>
+                </td>
+                <td class="tx-cell--actions">
+                    <div class="tx-actions">
+                        <button class="tx-action-btn save-edit-btn" data-id="${tx.id}" type="button">Salvar</button>
+                        <button class="tx-action-btn delete-tx-btn" data-id="${tx.id}" data-type="${tx.type}" type="button">Excluir</button>
+                    </div>
+                </td>
+            `;
             this.tbody.appendChild(tr);
         });
 
@@ -70,7 +73,7 @@ export class TransactionsTable {
 
         const filtered = this.transactions.filter((tx) => {
             const sameType = filter === 'all' || tx.type === filter;
-            const haystack = norm(`${tx.description} ${tx.category} ${tx.raw}`);
+            const haystack = norm(`${tx.description} ${tx.category} ${tx.raw} ${tx.date || ''}`);
             const matchesSearch = !query || haystack.includes(query);
             return sameType && matchesSearch;
         });
@@ -78,16 +81,16 @@ export class TransactionsTable {
         return filtered.sort((a, b) => {
             switch (sort) {
                 case 'oldest':
-                    return a.id - b.id;
+                    return a.timestamp - b.timestamp || a.id - b.id;
                 case 'highest':
                     return b.value - a.value || b.id - a.id;
                 case 'lowest':
                     return a.value - b.value || b.id - a.id;
                 case 'category':
-                    return a.category.localeCompare(b.category, 'pt-BR') || b.id - a.id;
+                    return a.category.localeCompare(b.category, 'pt-BR') || b.timestamp - a.timestamp;
                 case 'newest':
                 default:
-                    return b.id - a.id;
+                    return b.timestamp - a.timestamp || b.id - a.id;
             }
         });
     }
@@ -95,7 +98,7 @@ export class TransactionsTable {
     bindRowEvents() {
         this.tbody.querySelectorAll('.delete-tx-btn').forEach((button) => {
             button.addEventListener('click', () => {
-                this.onDelete(parseInt(button.dataset.id, 10), button.dataset.type);
+                this.onDelete(Number(button.dataset.id), button.dataset.type);
             });
         });
 
@@ -128,7 +131,9 @@ export class TransactionsTable {
     }
 
     handleSave(row) {
-        const id = parseInt(row.querySelector('[data-id]').dataset.id, 10);
+        if (!row || !row.classList.contains('tx-row-dirty')) return;
+
+        const id = Number(row.querySelector('[data-id]').dataset.id);
         this.onUpdate(id, {
             type: row.querySelector('.edit-type').value,
             description: row.querySelector('.edit-desc').value,
