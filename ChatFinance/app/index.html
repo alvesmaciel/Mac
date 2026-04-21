@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="./src/css/cursor.css">
     <link rel="stylesheet" href="./src/css/preloader.css">
+    <link rel="stylesheet" href="./src/css/workspace.css">
 
     <link
         href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap"
@@ -22,21 +23,20 @@
             <div class="preloader-logo">
                 <img src="images/Logo White.png" alt="AutoFinance" class="logo logo--preloader" />
             </div>
-
             <div class="preloader-bar">
                 <div class="preloader-fill"></div>
             </div>
-
             <div class="preloader-counter">0%</div>
         </div>
     </div>
-
 
     <!-- ===================== CURSOR ===================== -->
     <div id="cursor"></div>
     <div id="cursor-follower"></div>
 
     <div class="app">
+
+        <!-- ═══════════ CHAT PANEL ═══════════ -->
         <aside class="chat-panel">
             <header class="chat-header">
                 <div class="logo-row">
@@ -46,10 +46,10 @@
                     </div>
                     <div class="header-actions">
                         <button id="darkToggleBtn" title="Alternar tema">Lua</button>
-                        <button id="clearChatBtn" title="Limpar historico do chat">Limpar chat</button>
+                        <button id="clearChatBtn" title="Limpar histórico do chat">Limpar chat</button>
                     </div>
                 </div>
-                <p class="chat-sub">Digite suas financas em linguagem natural</p>
+                <p class="chat-sub">Digite suas finanças em linguagem natural</p>
             </header>
 
             <div class="chat-messages" id="chatMessages"></div>
@@ -57,7 +57,8 @@
             <div class="chat-input-wrap">
                 <div class="autocomplete-box" id="autocompleteBox"></div>
                 <div class="chat-input-area">
-                    <input type="text" id="chatInput" class="chat-input" placeholder="Ex: recebi 1443,13 salario..."
+                    <input type="text" id="chatInput" class="chat-input"
+                        placeholder="Ex: recebi 1443,13 salario..."
                         autocomplete="off" />
                     <button class="send-btn" id="sendBtn" aria-label="Enviar">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -70,25 +71,38 @@
             </div>
         </aside>
 
+        <!-- ═══════════ DASHBOARD PANEL ═══════════ -->
         <main class="dashboard-panel">
+
             <div class="dash-header">
-                <h1 class="dash-title">Painel Financeiro</h1>
-                <button class="graph-toggle-btn" id="graphToggleBtn">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                    </svg>
-                    Ver graficos
-                </button>
-                                <button class="graph-toggle-btn" id="graphToggleBtn">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                    </svg>
-                    Relatório
-                </button>
+                <div class="dash-header-left">
+                    <h1 class="dash-title">Painel Financeiro</h1>
+                    <!-- WorkspaceUI monta aqui -->
+                    <div id="wsDropdownAnchor"></div>
+                </div>
+                <div class="dash-header-right">
+                    <button class="graph-toggle-btn" id="graphToggleBtn">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                        </svg>
+                        Ver gráficos
+                    </button>
+                    <button class="graph-toggle-btn" id="reportBtn">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        Relatório
+                    </button>
+                </div>
             </div>
 
+            <!-- KPIs -->
             <div class="kpi-grid">
                 <div class="kpi-card kpi--balance">
                     <span class="kpi-label">Saldo Total</span>
@@ -112,12 +126,13 @@
                 </div>
             </div>
 
+            <!-- Transactions -->
             <div class="table-section">
                 <div class="table-header-row">
-                    <h2 class="section-title">Transacoes</h2>
+                    <h2 class="section-title">Transações</h2>
                     <div class="table-toolbar">
                         <input type="text" id="txSearchInput" class="table-search-input"
-                            placeholder="Buscar descricao ou categoria" />
+                            placeholder="Buscar descrição ou categoria" />
                         <select id="txFilterSelect" class="table-select">
                             <option value="all">Todos</option>
                             <option value="income">Receitas</option>
@@ -140,23 +155,24 @@
                         <thead>
                             <tr>
                                 <th>Tipo</th>
-                                <th>Descricao</th>
+                                <th>Descrição</th>
                                 <th>Categoria</th>
                                 <th>Valor</th>
-                                <th>Acoes</th>
+                                <th>Ações</th>
                             </tr>
                         </thead>
                         <tbody id="txTableBody">
                             <tr class="empty-row" id="emptyRow">
-                                <td colspan="5">Nenhuma transacao encontrada.</td>
+                                <td colspan="5">Nenhuma transação encontrada.</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
+            <!-- Charts -->
             <div class="graph-section hidden" id="graphSection">
-                <h2 class="section-title" style="margin-bottom:1.2rem">Graficos</h2>
+                <h2 class="section-title" style="margin-bottom:1.2rem">Gráficos</h2>
                 <div class="charts-grid">
                     <div class="chart-card">
                         <p class="chart-label">Gastos por Categoria</p>
@@ -168,12 +184,13 @@
                     </div>
                 </div>
             </div>
+
         </main>
     </div>
 
+    <script src="https://unpkg.com/dayjs@1/dayjs.min.js"></script>
     <script type="module" src="app-main.js"></script>
     <script src="./src/ui/preloader.js"></script>
     <script src="./src/ui/cursor.js"></script>
 </body>
-
 </html>

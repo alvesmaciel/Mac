@@ -1312,3 +1312,44 @@ html.dark .tx-row-dirty {
     transform: translateY(-6px);
     transition: all .3s ease;
 }
+
+/* ═══════════════════════════════════════════════
+   ADIÇÕES AO style.css — Workspaces + Dash header
+   Adicione este bloco ao FINAL do style.css existente
+═══════════════════════════════════════════════ */
+
+/* ── Dashboard header layout (dois lados) ── */
+.dash-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.8rem;
+}
+
+.dash-header-left {
+    display: flex;
+    flex-direction: column;
+    gap: .55rem;
+}
+
+.dash-header-right {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    flex-wrap: wrap;
+}
+
+/* ── Responsive: mobile dash-header ── */
+@media (max-width: 780px) {
+    .dash-header {
+        flex-direction: column;
+        gap: .75rem;
+    }
+
+    .dash-header-right {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
