@@ -10,32 +10,74 @@ import { WorkspaceManager } from './features/workspaces/workspace-manager.js';
 import { WorkspaceUI } from './features/workspaces/workspace-ui.js';
 import { escHtml, formatBRL } from './shared/utils.js';
 
+import { DuplicateDetector } from './features/automation/duplicate-detector.js';
+import { PatternAnalyzer } from './features/automation/pattern-analyzer.js';
+import { SmartAlerts } from './features/automation/smart-alerts.js';
+import { RecurringDetector } from './features/automation/recurring-detector.js';
+import { SmartCategorizer } from './features/automation/smart-categorizer.js';
+import { AutoCorrection } from './features/automation/auto-correction.js';
+
+import { ImportManager } from './features/import/import-manager.js';
+import { ImportUI } from './features/import/import-ui.js';
+
+import { settingsPanel } from './features/settings/automation-settings.js';
+
 const REPORT_THRESHOLD = 3;
 
 export class AutoFinanceApp {
     constructor() {
-        this.parser    = new FinanceParser();
-        this.wsManager = new WorkspaceManager();
-        this.wsUI      = new WorkspaceUI(this.wsManager, (id) => this._switchWorkspace(id));
+    this.parser    = new FinanceParser();
+    this.wsManager = new WorkspaceManager();
+    this.wsUI      = new WorkspaceUI(this.wsManager, (id) => this._switchWorkspace(id));
 
-        this.store = this._makeStore(this.wsManager.getActiveId());
+    this.store = this._makeStore(this.wsManager.getActiveId());
 
-        this.dashboard = new FinanceDashboard();
-        this.charts    = new ChartsPanel({ onToggle: () => this.renderAll() });
-        this.theme     = new ThemeController({ onThemeChange: () => this.charts.refreshIfVisible(this.store) });
+    this.dashboard = new FinanceDashboard();
+    this.charts    = new ChartsPanel({ onToggle: () => this.renderAll() });
+    this.theme     = new ThemeController({ onThemeChange: () => this.charts.refreshIfVisible(this.store) });
 
-        this.table = new TransactionsTable({
-            onDelete: (id, type) => this.handleDelete(id, type),
-            onUpdate: (id, data) => this.handleUpdate(id, data),
-        });
+    this.table = new TransactionsTable({
+        onDelete: (id, type) => this.handleDelete(id, type),
+        onUpdate: (id, data) => this.handleUpdate(id, data),
+    });
 
-        this.chat = new ChatPanel({
-            parser: this.parser,
-            store: this.store,
-            onStateChange: () => this.renderAll(),
-        });
-        
-    }
+    // 🧠 AUTOMAÇÕES (ANTES DO CHAT)
+    this.duplicateDetector = new DuplicateDetector(this.store);
+    this.patternAnalyzer   = new PatternAnalyzer(this.store);
+    this.smartCategorizer  = new SmartCategorizer(this.store);
+    this.autoCorrection    = new AutoCorrection(this.store);
+    this.recurringDetector = new RecurringDetector(this.store);
+
+    this.smartAlerts = new SmartAlerts(
+        this.store,
+        this.duplicateDetector,
+        this.patternAnalyzer
+    );
+
+    // 📥 IMPORT
+    this.importManager = new ImportManager(this.store);
+    this.importUI      = new ImportUI(this.importManager);
+
+    // 💬 CHAT (AGORA SIM)
+    this.chat = new ChatPanel({
+        parser: this.parser,
+        store: this.store,
+        onStateChange: () => this.renderAll(),
+
+        // 🔥 injeta automações
+        categorizer: this.smartCategorizer,
+        duplicateDetector: this.duplicateDetector,
+        alerts: this.smartAlerts,
+        autoCorrection: this.autoCorrection,
+        recurringDetector: this.recurringDetector,
+
+        smartReply: (data) => this.smartReply(data)
+    });
+
+    this.chat.onMessageEdited = (messageId, newText) => {
+    this.handleEditedMessage(messageId, newText);
+};
+}
 
     /* ═══════════════════════════════════ */
     /* 🔥 RESPOSTAS INTELIGENTES DO CHAT  */
@@ -75,37 +117,46 @@ export class AutoFinanceApp {
         return new FinanceStore(this.wsManager.storeKey(wsId));
     }
 
-    _switchWorkspace(wsId) {
-        this.store.save(this.chat.getHistory());
+_switchWorkspace(wsId) {
+    this.store.save(this.chat.getHistory());
 
-        this.store      = this._makeStore(wsId);
-        this.chat.store = this.store;
+    this.store      = this._makeStore(wsId);
+    this.chat.store = this.store;
 
-        const saved = this.store.load();
+    // 🧠 MUITO IMPORTANTE
+    this.duplicateDetector.store = this.store;
+    this.patternAnalyzer.store   = this.store;
+    this.smartCategorizer.store  = this.store;
+    this.autoCorrection.store    = this.store;
+    this.recurringDetector.store = this.store;
+    this.smartAlerts.store       = this.store;
+    this.importManager.store     = this.store;
 
-        if (saved?.chatHistory?.length) {
-            this.chat.restoreHistory(saved.chatHistory);
-        } else {
-            this.chat.renderWelcome();
-        }
+    const saved = this.store.load();
 
-        this._updateDocTitle();
-        this.renderAll();
-
-        if (this.store.hasTransactions()) {
-            const ws = this.wsManager.getActive();
-
-            const bubble = this.chat.addBubble(
-                `📁 Espaço <strong>${escHtml(ws.name)}</strong>: ${this.store.getAllTransactions().length} transação(ões) carregada(s).`,
-                'msg--response type-income',
-            );
-
-            setTimeout(() => {
-                bubble.classList.add('fade-out');
-                setTimeout(() => bubble.remove(), 300);
-            }, 4000);
-        }
+    if (saved?.chatHistory?.length) {
+        this.chat.restoreHistory(saved.chatHistory);
+    } else {
+        this.chat.renderWelcome();
     }
+
+    this._updateDocTitle();
+    this.renderAll();
+
+    if (this.store.hasTransactions()) {
+        const ws = this.wsManager.getActive();
+
+        const bubble = this.chat.addBubble(
+            `📁 Espaço <strong>${escHtml(ws.name)}</strong>: ${this.store.getAllTransactions().length} transação(ões) carregada(s).`,
+            'msg--response type-income',
+        );
+
+        setTimeout(() => {
+            bubble.classList.add('fade-out');
+            setTimeout(() => bubble.remove(), 300);
+        }, 4000);
+    }
+}
 
     _updateDocTitle() {
         const ws = this.wsManager.getActive();
@@ -115,38 +166,46 @@ export class AutoFinanceApp {
     /* ══ Boot ════════════════════════════════════ */
 
     boot() {
-        this.theme.boot();
-        this.chat.bind();
-        this.bindClearAll();
-        this.bindReportButton();
+    this.theme.boot();
+    this.chat.bind();
+    this.bindClearAll();
+    this.bindReportButton();
 
-        this.wsUI.mount();
-        this._updateDocTitle();
+    this.wsUI.mount();
+    this._updateDocTitle();
 
-        const saved = this.store.load();
+    // 🔥 AQUI ESTÁ O QUE FALTAVA
+    const header = document.querySelector('.header-actions');
 
-        if (saved?.chatHistory?.length) {
-            this.chat.restoreHistory(saved.chatHistory);
-        } else {
-            this.chat.renderWelcome();
-        }
-
-        this.renderAll();
-
-        if (this.store.hasTransactions()) {
-            const bubble = this.chat.addBubble(
-                `📊 Dados restaurados: <strong>${this.store.getAllTransactions().length}</strong> transações carregadas.`,
-                'msg--response type-income',
-            );
-
-            this.chat.persist();
-
-            setTimeout(() => {
-                bubble.classList.add('fade-out');
-                setTimeout(() => bubble.remove(), 300);
-            }, 5000);
-        }
+    if (header) {
+        header.appendChild(settingsPanel.createHeaderButton());
+        header.appendChild(this.importUI.createHeaderButton());
     }
+
+    const saved = this.store.load();
+
+    if (saved?.chatHistory?.length) {
+        this.chat.restoreHistory(saved.chatHistory);
+    } else {
+        this.chat.renderWelcome();
+    }
+
+    this.renderAll();
+
+    if (this.store.hasTransactions()) {
+        const bubble = this.chat.addBubble(
+            `📊 Dados restaurados: <strong>${this.store.getAllTransactions().length}</strong> transações carregadas.`,
+            'msg--response type-income',
+        );
+
+        this.chat.persist();
+
+        setTimeout(() => {
+            bubble.classList.add('fade-out');
+            setTimeout(() => bubble.remove(), 300);
+        }, 5000);
+    }
+}
 
     /* ══ Render ══════════════════════════════════ */
 
@@ -185,6 +244,39 @@ export class AutoFinanceApp {
 
         this.renderAll();
     }
+
+    handleEditedMessage(messageId, newText) {
+    // 1. remove última transação (simples por enquanto)
+    const removed = this.store.deleteLastTransaction();
+
+    // 2. parse da nova mensagem
+    const parsed = this.parser.parse(newText);
+
+    if (!parsed || !parsed.value) {
+        this.chat.addBubble("⚠️ Não consegui entender a edição.");
+        return;
+    }
+
+    // 3. auto categorização
+    if (parsed.description && this.smartCategorizer) {
+        const suggestion = this.smartCategorizer.suggestCategory(parsed.description, parsed.type);
+        if (suggestion?.category) {
+            parsed.category = suggestion.category;
+        }
+    }
+
+    // 4. salva nova transação
+    this.store.addTransaction(parsed);
+
+    // 5. atualiza tudo
+    this.renderAll();
+
+    // 6. feedback
+    this.chat.addBubble(
+        `✏️ Atualizado: <strong>${formatBRL(parsed.value)}</strong> (${parsed.category})`,
+        'msg--response type-income'
+    );
+}
 
     bindClearAll() {
         document.getElementById('clearBtn')?.addEventListener('click', () => {
@@ -246,4 +338,6 @@ export class AutoFinanceApp {
             ? 'Gerar relatório financeiro'
             : `Adicione ${REPORT_THRESHOLD - count} transação(ões)`;
     }
+
+    
 }

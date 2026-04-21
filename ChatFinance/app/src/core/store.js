@@ -203,6 +203,11 @@ export class FinanceStore {
         return this.getAllTransactions().length > 0;
     }
 
+    deleteTransactionById(id) {
+    this.transactions = this.transactions.filter(tx => tx.id !== id);
+    this.save();
+}
+
     getTypeMap() {
         return {
             income:     this.income,

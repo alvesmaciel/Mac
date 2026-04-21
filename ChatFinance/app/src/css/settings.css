@@ -1,0 +1,326 @@
+/* ═══════════════════════════════════════════════
+   Settings Panel — ChatFinance
+   Configuration UI for automations
+═══════════════════════════════════════════════ */
+
+.settings-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(28, 26, 23, 0.5);
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.settings-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.settings-panel {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    background: var(--panel-bg);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    width: 90%;
+    max-width: 600px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease;
+    z-index: 10000;
+}
+
+.settings-overlay.visible .settings-panel {
+    transform: translate(-50%, -50%) scale(1);
+}
+
+/* ── Header ── */
+.settings-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--cream-deep);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.settings-header h2 {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    color: var(--ink);
+    margin: 0;
+}
+
+.settings-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--ink-muted);
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.settings-close:hover {
+    color: var(--ink);
+    transform: rotate(90deg);
+}
+
+/* ── Content ── */
+.settings-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+
+.settings-group {
+    margin-bottom: 2rem;
+}
+
+.settings-group:last-child {
+    margin-bottom: 1rem;
+}
+
+.settings-group h3 {
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ── Setting Item ── */
+.setting-item {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    border-radius: var(--radius-sm);
+    background: var(--cream);
+    transition: all 0.2s ease;
+}
+
+.setting-item:hover {
+    background: var(--cream-deep);
+}
+
+.setting-item.setting-changed {
+    animation: settingChanged 0.5s ease;
+}
+
+@keyframes settingChanged {
+    0% { background: var(--green-light); }
+    100% { background: var(--cream); }
+}
+
+.setting-item label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: var(--ink);
+    font-weight: 500;
+}
+
+.setting-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--green);
+}
+
+.setting-item input[type="range"] {
+    width: 100%;
+    margin: 0.5rem 0;
+    cursor: pointer;
+    accent-color: var(--green);
+}
+
+.setting-item small {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--ink-faint);
+    margin-top: 0.4rem;
+    line-height: 1.3;
+}
+
+/* ── Footer ── */
+.settings-footer {
+    padding: 1.5rem;
+    border-top: 1px solid var(--cream-deep);
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+.btn {
+    padding: 0.65rem 1.25rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-primary {
+    background: var(--green);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--green);
+    filter: brightness(1.1);
+}
+
+.btn-secondary {
+    background: var(--cream-deep);
+    color: var(--ink);
+    border: 1px solid var(--cream-deep);
+}
+
+.btn-secondary:hover {
+    background: var(--cream-deep);
+    filter: brightness(0.9);
+}
+
+/* ── Header Button ── */
+.settings-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.38rem 0.72rem;
+    border: 1.5px solid var(--cream-deep);
+    border-radius: var(--radius-sm);
+    background: var(--panel-bg);
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all var(--t);
+    user-select: none;
+}
+
+.settings-btn:hover {
+    border-color: var(--ink);
+    background: var(--cream-deep);
+}
+
+.settings-btn:active {
+    transform: scale(0.98);
+}
+
+/* ═════════════════════════════════════════════
+   Scroll Bar Styling
+═════════════════════════════════════════════ */
+
+.settings-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.settings-content::-webkit-scrollbar-track {
+    background: var(--cream-deep);
+    border-radius: 3px;
+}
+
+.settings-content::-webkit-scrollbar-thumb {
+    background: var(--ink-faint);
+    border-radius: 3px;
+}
+
+.settings-content::-webkit-scrollbar-thumb:hover {
+    background: var(--ink-muted);
+}
+
+/* ═════════════════════════════════════════════
+   Dark Mode
+═════════════════════════════════════════════ */
+
+html.dark .settings-panel {
+    background: var(--cream-dark);
+}
+
+html.dark .settings-header {
+    border-bottom-color: var(--cream-deep);
+}
+
+html.dark .settings-group h3 {
+    color: var(--ink);
+}
+
+html.dark .setting-item {
+    background: var(--cream-deep);
+}
+
+html.dark .setting-item:hover {
+    background: var(--cream-deep);
+    filter: brightness(1.2);
+}
+
+html.dark .setting-item label {
+    color: var(--ink);
+}
+
+html.dark .setting-item small {
+    color: var(--ink-faint);
+}
+
+html.dark .settings-footer {
+    border-top-color: var(--cream-deep);
+}
+
+html.dark .btn-secondary {
+    background: var(--cream-deep);
+    color: var(--ink);
+}
+
+html.dark .btn-secondary:hover {
+    filter: brightness(1.2);
+}
+
+html.dark .settings-btn {
+    background: var(--panel-bg);
+    border-color: var(--cream-deep);
+    color: var(--ink);
+}
+
+html.dark .settings-btn:hover {
+    background: var(--cream-deep);
+}
+
+/* ═════════════════════════════════════════════
+   Responsive Design
+═════════════════════════════════════════════ */
+
+@media (max-width: 600px) {
+    .settings-panel {
+        width: 95%;
+        max-height: 90vh;
+        border-radius: var(--radius-md);
+    }
+
+    .settings-content {
+        padding: 1rem;
+    }
+
+    .settings-header,
+    .settings-footer {
+        padding: 1rem;
+    }
+
+    .setting-item {
+        padding: 0.5rem;
+    }
+}

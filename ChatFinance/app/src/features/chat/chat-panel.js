@@ -1,4 +1,7 @@
 import { escHtml, formatBRL, norm } from '../../shared/utils.js';
+import { messageActions } from './message-actions.js';
+import { conversationContext } from './conversation-context.js';
+import { typingEffects } from './typing-effects.js';
 
 const BASE_SUGGESTIONS = [
     { prefix: 'rec', full: 'recebi ', type: 'income', label: 'Receita', detail: 'Registrar entrada de dinheiro' },
@@ -25,18 +28,46 @@ const TYPE_AC_CLS = {
 };
 
 export class ChatPanel {
-    constructor({ parser, store, onStateChange }) {
-        this.parser = parser;
-        this.store = store;
-        this.onStateChange = onStateChange;
-        this.messagesEl = document.getElementById('chatMessages');
-        this.inputEl = document.getElementById('chatInput');
-        this.sendButton = document.getElementById('sendBtn');
-        this.clearButton = document.getElementById('clearChatBtn');
-        this.autocompleteEl = document.getElementById('autocompleteBox');
-        this.acVisible = [];
-        this.acSelected = -1;
-    }
+    constructor({
+    parser,
+    store,
+    onStateChange,
+
+    // 🔥 NOVO
+    categorizer,
+    duplicateDetector,
+    alerts,
+    autoCorrection,
+    recurringDetector,
+    smartReply
+}) {
+    this.parser = parser;
+    this.store = store;
+    this.onStateChange = onStateChange;
+
+    this.messagesEl = document.getElementById('chatMessages');
+    this.inputEl = document.getElementById('chatInput');
+    this.sendButton = document.getElementById('sendBtn');
+    this.clearButton = document.getElementById('clearChatBtn');
+    this.autocompleteEl = document.getElementById('autocompleteBox');
+
+    this.acVisible = [];
+    this.acSelected = -1;
+
+    // 🧠 AUTOMAÇÕES (ESSENCIAL)
+    this.categorizer = categorizer;
+    this.duplicateDetector = duplicateDetector;
+    this.smartAlerts = alerts;
+    this.autoCorrection = autoCorrection;
+    this.recurringDetector = recurringDetector;
+    this.smartReply = smartReply;
+
+    // 🆕 módulos UI
+    this.messageActions = messageActions;
+    this.conversationContext = conversationContext;
+    this.typingEffects = typingEffects;
+    this.isTyping = false;
+}
 
     bind() {
         this.inputEl.addEventListener('input', () => this.updateAutocomplete(this.inputEl.value));
@@ -44,6 +75,10 @@ export class ChatPanel {
         this.inputEl.addEventListener('blur', () => setTimeout(() => this.hideAutocomplete(), 150));
         this.sendButton.addEventListener('click', () => this.handleSend());
         this.clearButton.addEventListener('click', () => this.handleClearChat());
+
+        // 🆕 Restaura histórico de mensagens
+        this.messageActions.restoreMessages(this.messagesEl);
+        this.conversationContext.restore();
     }
 
     renderWelcome() {
@@ -85,19 +120,14 @@ export class ChatPanel {
     }
 
     addBubble(html, cls) {
-        const message = document.createElement('div');
+        // 🆕 Usa messageActions para criar bubble com ID
+        const { element: message, id: messageId } = this.messageActions.createMessageBubble(html, cls.includes('msg--user') ? 'user' : 'response');
         message.className = `msg ${cls}`;
 
-        const bubble = document.createElement('div');
-        bubble.className = 'msg-bubble';
-        bubble.innerHTML = html;
-
-        message.appendChild(bubble);
         this.messagesEl.appendChild(message);
-
         this.messagesEl.scrollTop = this.messagesEl.scrollHeight;
 
-        return message; // 👈 ESSENCIAL
+        return message;
     }
 
     buildResponse(parsed) {
@@ -205,29 +235,108 @@ export class ChatPanel {
     
 
     handleSend() {
-        const text = this.inputEl.value.trim();
-        if (!text) return;
+    const text = this.inputEl.value.trim();
+    if (!text || this.isTyping) return;
 
-        this.hideAutocomplete();
-        this.addBubble(escHtml(text), 'msg--user');
+    this.hideAutocomplete();
 
-        const parsed = this.parser.parse(text);
-        if (['income', 'expense', 'debt', 'receivable'].includes(parsed.type) && parsed.value) {
-            this.store.addTransaction(parsed);
-            this.onStateChange();
+    // ✅ limpa IMEDIATO (resolve bug visual)
+    this.inputEl.value = '';
+    this.inputEl.focus();
+
+    // 👤 mensagem do usuário
+    const userMsg = this.addBubble(escHtml(text), 'msg--user');
+    this.typingEffects.fadeInMessage(userMsg);
+
+    this.conversationContext.addMessage('user', text);
+
+    try {
+        // ✏️ AUTO CORRECTION
+        const corrected = this.autoCorrection?.correct
+            ? this.autoCorrection.correct(text)
+            : text;
+
+        // 🧠 PARSE
+        const parsed = this.parser.parse(corrected);
+
+        if (!parsed) {
+            this.addBubble("Não entendi. Digite 'ajuda'", 'msg--response type-unknown');
+            return;
         }
 
-        const response = this.buildResponse(parsed);
-        this.addBubble(response.html, response.cls);
-        this.persist();
+        // 🏷️ AUTO CATEGORIZAÇÃO
+        if (parsed.description && this.categorizer) {
+            const suggestion = this.categorizer.suggestCategory(parsed.description, parsed.type);
+            if (suggestion?.category) {
+                parsed.category = suggestion.category;
+            }
+        }
 
-        this.inputEl.value = '';
-        this.inputEl.focus();
+        // 🔍 DUPLICATE DETECTOR
+        const duplicate = this.duplicateDetector?.checkDuplicate
+            ? this.duplicateDetector.checkDuplicate(parsed)
+            : null;
+
+        if (duplicate) {
+            this.addBubble(
+    `⚠️ Possível duplicata (${duplicate.similarity}%)`,
+    'msg--response type-unknown'
+);
+        }
+
+        // 💾 SALVAR + ATUALIZAR DASHBOARD
+        if (['income', 'expense', 'debt', 'receivable'].includes(parsed.type) && parsed.value) {
+            const tx = this.store.addTransaction(parsed);
+
+// 🔥 vincula mensagem com transação
+this.messageActions.linkTransactionToMessage(userMsg, tx.id);
+            this.onStateChange?.();
+        }
+
+        // 🔔 ALERTAS
+        const alerts = this.smartAlerts?.runChecks
+            ? this.smartAlerts.runChecks(parsed)
+            : [];
+
+        alerts.forEach(a => {
+            this.addBubble(`⚠️ ${a.message}`, 'msg--response type-unknown');
+        });
+
+        // 🔁 RECORRÊNCIA
+        this.recurringDetector?.analyze?.(parsed);
+
+        // 🤖 RESPOSTA
+        const response = this.buildResponse(parsed);
+
+        this.isTyping = true;
+        const typingIndicator = this.typingEffects.showTypingIndicator(this.messagesEl);
+
+        setTimeout(async () => {
+            this.typingEffects.removeTypingIndicator(typingIndicator);
+
+            await this.typingEffects.typeMessage(
+    this.messagesEl,
+    response.html,
+    20
+);  
+
+            this.conversationContext.addMessage('bot', response.html);
+
+            this.isTyping = false;
+            this.persist();
+        }, 300);
+
+    } catch (err) {
+        console.error("Erro no chat:", err);
+        this.addBubble("⚠️ Erro ao processar mensagem.");
     }
+}
 
     handleClearChat() {
         if (!confirm('Limpar apenas o historico do chat?')) return;
         this.renderWelcome();
+        this.messageActions.clearAll(this.messagesEl);
+        this.conversationContext.newConversation();
         this.persist();
     }
 
@@ -370,6 +479,8 @@ export class ChatPanel {
 
     persist() {
         this.store.save(this.getHistory());
+        // 🆕 Persiste também as mensagens com ID
+        this.messageActions.saveAllMessages(this.messagesEl);
     }
 }
 
