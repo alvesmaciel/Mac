@@ -3,6 +3,7 @@ import { messageActions } from './message-actions.js';
 import { conversationContext } from './conversation-context.js';
 import { typingEffects } from './typing-effects.js';
 import { FallbackEngine } from '../automation/auto-correction.js';
+import { confirmDialog } from '../../shared/dialog.js';
 
 const BASE_SUGGESTIONS = [
     { prefix: 'rec', full: 'recebi ', type: 'income', label: 'Receita', detail: 'Registrar entrada' },
@@ -294,8 +295,16 @@ export class ChatPanel {
         }
     }
 
-    handleClearChat() {
-        if (!confirm('Limpar apenas o historico do chat?')) return;
+    async handleClearChat() {
+        const confirmed = await confirmDialog({
+            title: 'Limpar chat',
+            message: 'Isso vai remover o historico visivel da conversa, mas nao apaga suas transacoes.',
+            confirmLabel: 'Limpar agora',
+            cancelLabel: 'Voltar',
+            variant: 'danger',
+        });
+        if (!confirmed) return;
+
         this.messageActions.clearAll(this.messagesEl);
         this.conversationContext.newConversation();
         this.renderWelcome();

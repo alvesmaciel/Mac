@@ -218,10 +218,13 @@ body {
 
 .msg {
     display: flex;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
 .msg--user {
     justify-content: flex-end;
+    align-items: flex-end;
 }
 
 .msg--system {
@@ -254,12 +257,14 @@ body {
 }
 
 .msg--user .msg-bubble {
-    background: var(--ink);
-    color: var(--cream);
+    background: linear-gradient(180deg, var(--panel-bg), var(--cream-dark));
+    color: var(--ink);
+    border: 1px solid var(--cream-deep);
     border-bottom-right-radius: 3px;
-    font-family: var(--font-mono);
-    font-size: .77rem;
-    letter-spacing: .01em;
+    font-family: var(--font-body);
+    font-size: .8rem;
+    letter-spacing: 0;
+    box-shadow: var(--shadow-sm);
 }
 
 .msg--system .msg-bubble {
@@ -1389,6 +1394,69 @@ html.dark .tx-row-dirty {
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-sm);
     padding: 1.5rem;
+}
+
+.app-dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(28, 26, 23, 0.42);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    z-index: 11000;
+    opacity: 0;
+    transition: opacity .18s ease;
+}
+
+.app-dialog-overlay.is-visible {
+    opacity: 1;
+}
+
+.app-dialog {
+    width: min(100%, 420px);
+    background: var(--panel-bg);
+    border: 1px solid var(--cream-deep);
+    border-radius: 18px;
+    box-shadow: 0 20px 60px rgba(28, 26, 23, .18);
+    overflow: hidden;
+    transform: translateY(10px) scale(.98);
+    transition: transform .18s ease;
+}
+
+.app-dialog-overlay.is-visible .app-dialog {
+    transform: translateY(0) scale(1);
+}
+
+.app-dialog__header,
+.app-dialog__body,
+.app-dialog__footer {
+    padding: 1rem 1.1rem;
+}
+
+.app-dialog__header {
+    border-bottom: 1px solid var(--cream-dark);
+}
+
+.app-dialog__header h3 {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+}
+
+.app-dialog__body p {
+    color: var(--ink-muted);
+    line-height: 1.6;
+}
+
+.app-dialog__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: .65rem;
+    border-top: 1px solid var(--cream-dark);
+}
+
+.app-dialog--danger .btn-primary {
+    background: var(--red);
 }
 
 .tx-date-badge {

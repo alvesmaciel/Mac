@@ -1,0 +1,31 @@
+# ═══════════════════════════════════════════════════════════════
+#  netlify.toml — ChatFinance
+#  Coloque este arquivo em: ChatFinance/app/netlify.toml
+#
+#  No painel do Netlify:
+#    Site Settings → Build & Deploy → Base directory: ChatFinance/app
+# ═══════════════════════════════════════════════════════════════
+
+[build]
+  base    = "ChatFinance/app"
+  publish = "ChatFinance/app"
+
+# SPA redirect — qualquer rota desconhecida serve o index.html
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
+
+# Bloqueia acesso direto a arquivos sensíveis
+[[headers]]
+  for = "/*.env"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+
+# Headers de segurança globais
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options        = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy        = "strict-origin-when-cross-origin"

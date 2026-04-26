@@ -11,16 +11,13 @@
 /* ── Message Actions Container ── */
 .msg-actions {
     display: flex;
-    gap: 0.5rem;
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--cream-deep);
+    gap: 0.35rem;
+    margin-top: 0.4rem;
+    padding-left: 0.2rem;
     flex-wrap: wrap;
-
     opacity: 0;
     transform: translateY(6px);
     transition: opacity 0.2s ease, transform 0.2s ease;
-
     pointer-events: none;
     z-index: 2;
 }
@@ -46,31 +43,23 @@
 .msg-action-btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    padding: 0.35rem 0.65rem;
-
-    border: 1px solid var(--cream-deep);
-    border-radius: 6px;
-
-    background: var(--panel-bg);
-    backdrop-filter: blur(8px);
-
-    font-family: var(--font-body);
-    font-size: 0.75rem;
-    font-weight: 500;
-
-    color: var(--ink);
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink-muted);
     cursor: pointer;
-
     transition: all 0.2s ease;
-    white-space: nowrap;
     user-select: none;
 }
 
 .msg-action-btn:hover {
-    background: var(--cream-deep);
-    border-color: var(--ink-muted);
-    transform: translateY(-2px);
+    background: var(--cream-dark);
+    border-color: var(--cream-deep);
+    transform: translateY(-1px);
 }
 
 .msg-action-btn:active {
@@ -78,34 +67,29 @@
 }
 
 /* ── Specific button colors ── */
-.msg-action-edit {
-    color: var(--blue);
-    border-color: var(--blue-light);
+.msg-action-btn svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .msg-action-edit:hover {
     background: var(--blue-light);
-    border-color: var(--blue);
-}
-
-.msg-action-delete {
-    color: var(--red);
-    border-color: var(--red-light);
+    color: var(--blue);
 }
 
 .msg-action-delete:hover {
     background: var(--red-light);
-    border-color: var(--red);
-}
-
-.msg-action-copy {
-    color: var(--green);
-    border-color: var(--green-light);
+    color: var(--red);
 }
 
 .msg-action-copy:hover {
     background: var(--green-light);
-    border-color: var(--green);
+    color: var(--green);
 }
 
 /* ── Edit Form ── */

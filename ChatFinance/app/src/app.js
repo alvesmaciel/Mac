@@ -21,6 +21,16 @@ import { settingsPanel } from './features/settings/automation-settings.js';
 
 const REPORT_THRESHOLD = 3;
 
+const supabaseClient = supabase.createClient(
+    'https://smaojgaqishjnvhlewkz.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtYW9qZ2FxaXNoam52aGxld2t6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNTUyMzEsImV4cCI6MjA5MjczMTIzMX0.4g8xDwRhnLgOnhH3SY5MpEuSAA2833Je63COfJ1HlZ0'
+);
+
+const { data, error } = await supabaseClient
+  .from('transactions')
+  .select('*');
+
+
 export class AutoFinanceApp {
     constructor() {
         this.parser = new FinanceParser();
@@ -404,4 +414,6 @@ export class AutoFinanceApp {
             ? 'Gerar relatorio financeiro'
             : `Adicione ${REPORT_THRESHOLD - count} transacao(oes)`;
     }
+
+    
 }

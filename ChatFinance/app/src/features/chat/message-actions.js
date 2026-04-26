@@ -1,4 +1,5 @@
 import { appStorage } from '../../shared/storage.js';
+import { confirmDialog } from '../../shared/dialog.js';
 
 export class MessageActions {
     generateMessageId() {
@@ -47,19 +48,41 @@ export class MessageActions {
         const editBtn = document.createElement('button');
         editBtn.className = 'msg-action-btn msg-action-edit';
         editBtn.type = 'button';
-        editBtn.textContent = 'Editar';
+        editBtn.title = 'Editar mensagem';
+        editBtn.setAttribute('aria-label', 'Editar mensagem');
+        editBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 20h9"/>
+                <path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4Z"/>
+            </svg>
+        `;
         editBtn.addEventListener('click', () => this.onEditClick(messageId));
 
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'msg-action-btn msg-action-delete';
         deleteBtn.type = 'button';
-        deleteBtn.textContent = 'Excluir';
+        deleteBtn.title = 'Excluir mensagem';
+        deleteBtn.setAttribute('aria-label', 'Excluir mensagem');
+        deleteBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 6h18"/>
+                <path d="M8 6V4h8v2"/>
+                <path d="M19 6l-1 14H6L5 6"/>
+            </svg>
+        `;
         deleteBtn.addEventListener('click', () => this.onDeleteClick(messageId));
 
         const copyBtn = document.createElement('button');
         copyBtn.className = 'msg-action-btn msg-action-copy';
         copyBtn.type = 'button';
-        copyBtn.textContent = 'Copiar';
+        copyBtn.title = 'Copiar mensagem';
+        copyBtn.setAttribute('aria-label', 'Copiar mensagem');
+        copyBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="9" y="9" width="11" height="11" rx="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+        `;
         copyBtn.addEventListener('click', () => this.onCopyClick(messageId));
 
         container.appendChild(editBtn);
@@ -120,10 +143,18 @@ export class MessageActions {
         }));
     }
 
-    onDeleteClick(messageId) {
+    async onDeleteClick(messageId) {
         const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
         if (!messageEl) return;
-        if (!confirm('Deseja excluir esta mensagem?')) return;
+
+        const confirmed = await confirmDialog({
+            title: 'Excluir mensagem',
+            message: 'A mensagem sera removida do chat. Se ela estiver vinculada a uma transacao, o registro tambem sera excluido.',
+            confirmLabel: 'Excluir',
+            cancelLabel: 'Cancelar',
+            variant: 'danger',
+        });
+        if (!confirmed) return;
 
         const transactionId = messageEl.getAttribute('data-transaction-id');
         messageEl.remove();
@@ -141,10 +172,14 @@ export class MessageActions {
         const button = messageEl.querySelector('.msg-action-copy');
         try {
             await navigator.clipboard.writeText(messageEl.querySelector('.msg-content')?.textContent.trim() || '');
-            const previous = button.textContent;
-            button.textContent = 'Copiado';
+            const previous = button.innerHTML;
+            button.innerHTML = `
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m5 13 4 4L19 7"/>
+                </svg>
+            `;
             setTimeout(() => {
-                button.textContent = previous;
+                button.innerHTML = previous;
             }, 1200);
         } catch (error) {
             console.error('Erro ao copiar:', error);
