@@ -1,0 +1,18 @@
+# ═══════════════════════════════════════════════════════════════
+#  netlify.toml — HomePage
+#  Coloque este arquivo em: HomePage/netlify.toml
+#
+#  No painel do Netlify (site separado):
+#    Site Settings → Build & Deploy → Base directory: HomePage
+# ═══════════════════════════════════════════════════════════════
+
+[build]
+  base    = "HomePage"
+  publish = "HomePage"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options        = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy        = "strict-origin-when-cross-origin"

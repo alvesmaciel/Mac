@@ -1,0 +1,315 @@
+/* ═══════════════════════════════════════════════
+   Message Actions & Typing Effects — ChatFinance
+   FIXED + UX IMPROVED VERSION
+═══════════════════════════════════════════════ */
+
+/* ── Message base fix ── */
+.msg {
+    position: relative;
+}
+
+/* ── Message Actions Container ── */
+.msg-actions {
+    display: flex;
+    gap: 0.35rem;
+    margin-top: 0.4rem;
+    padding-left: 0.2rem;
+    flex-wrap: wrap;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* 🔥 FIX: funciona em qualquer msg + acessível */
+.msg:hover .msg-actions,
+.msg:focus-within .msg-actions {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+/* 🔥 FIX MOBILE */
+@media (hover: none) {
+    .msg-actions {
+        opacity: 1;
+        transform: none;
+        pointer-events: auto;
+    }
+}
+
+/* ── Action Buttons ── */
+.msg-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.msg-action-btn:hover {
+    background: var(--cream-dark);
+    border-color: var(--cream-deep);
+    transform: translateY(-1px);
+}
+
+.msg-action-btn:active {
+    transform: translateY(0);
+}
+
+/* ── Specific button colors ── */
+.msg-action-btn svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.msg-action-edit:hover {
+    background: var(--blue-light);
+    color: var(--blue);
+}
+
+.msg-action-delete:hover {
+    background: var(--red-light);
+    color: var(--red);
+}
+
+.msg-action-copy:hover {
+    background: var(--green-light);
+    color: var(--green);
+}
+
+/* ── Edit Form ── */
+.msg-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.msg-edit-input {
+    width: 100%;
+    padding: 0.75rem;
+
+    border: 2px solid var(--blue);
+    border-radius: 6px;
+
+    background: var(--panel-bg);
+    color: var(--ink);
+
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+
+    resize: vertical;
+    min-height: 60px;
+
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.msg-edit-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--blue-light);
+}
+
+/* ── Edit Buttons ── */
+.msg-edit-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.msg-edit-save,
+.msg-edit-cancel {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 500;
+
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.msg-edit-save {
+    background: var(--green);
+    color: white;
+    border: none;
+}
+
+.msg-edit-save:hover {
+    filter: brightness(1.1);
+}
+
+.msg-edit-cancel {
+    background: var(--cream-deep);
+    color: var(--ink);
+    border: 1px solid var(--cream-deep);
+}
+
+.msg-edit-cancel:hover {
+    filter: brightness(0.9);
+}
+
+/* ═══════════════════════════════════════════════
+   TYPING EFFECTS & ANIMATIONS
+═══════════════════════════════════════════════ */
+
+/* ── Typing Indicator ── */
+.typing-dots {
+    display: flex;
+    gap: 0.35rem;
+    align-items: center;
+    height: 1.2rem;
+}
+
+.typing-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--ink-muted);
+    animation: typingAnimation 1.4s infinite;
+}
+
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingAnimation {
+    0%, 60%, 100% { opacity: 0.5; transform: translateY(0); }
+    30% { opacity: 1; transform: translateY(-8px); }
+}
+
+/* ── Typing / Thinking ── */
+.msg--typing-indicator,
+.msg--thinking,
+.msg--loading {
+    animation: fadeIn 0.3s ease;
+}
+
+.msg-typing {
+    font-style: italic;
+    color: var(--ink-muted);
+}
+
+.thinking-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-style: italic;
+    color: var(--ink-muted);
+    animation: pulse 1.5s infinite;
+}
+
+/* ── Animations ── */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shakeError {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+}
+
+.shake-error {
+    animation: shakeError 0.4s ease;
+}
+
+@keyframes pulseSuccess {
+    50% { transform: scale(1.02); opacity: 0.8; }
+}
+
+.pulse-success {
+    animation: pulseSuccess 0.6s ease;
+}
+
+@keyframes highlightNew {
+    from { background: var(--amber-light); }
+    to { background: transparent; }
+}
+
+.highlight-new {
+    animation: highlightNew 1s ease;
+}
+
+@keyframes pulse {
+    50% { opacity: 0.7; }
+}
+
+/* ── Copy Feedback ── */
+.copy-success {
+    animation: copyFeedback 0.3s ease;
+    color: var(--green);
+}
+
+@keyframes copyFeedback {
+    0% { transform: scale(0.8); opacity: 0; }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* ── Progress Bar ── */
+.progress-bar {
+    width: 100%;
+    height: 3px;
+    background: var(--cream-deep);
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 0.5rem 0;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue), var(--green));
+    border-radius: 2px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+/* ── Typing content ── */
+[data-typing="true"] {
+    min-height: 1.2em;
+    word-break: break-word;
+}
+
+/* ── Smooth scroll ── */
+html {
+    scroll-behavior: smooth;
+}
+
+/* ═════════════════════════════════════════════
+   DARK MODE FIX (REAL)
+═════════════════════════════════════════════ */
+
+html.dark .msg-action-btn {
+    background: var(--cream-dark);
+    border-color: var(--cream-deep);
+    color: var(--ink);
+}
+
+html.dark .msg-edit-input {
+    background: var(--cream-dark);
+    color: var(--ink);
+}
+
+html.dark .msg-edit-cancel {
+    background: var(--cream-deep);
+    color: var(--ink);
+}
+
+html.dark .progress-bar {
+    background: var(--cream-deep);
+}

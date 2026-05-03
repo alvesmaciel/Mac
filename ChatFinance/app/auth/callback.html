@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Entrando… — AutoFinance</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --cream: #F7F4EE;
+            --ink: #1C1A17;
+            --ink-muted: #6B6760;
+            --ink-faint: #ABA89F;
+            --green: #2D6A4F;
+            --green-light: #E8F5EE;
+            --red: #C0392B;
+            --red-light: #FDECEA;
+            --font-display: 'DM Serif Display', serif;
+            --font-mono: 'DM Mono', monospace;
+            --font-body: 'DM Sans', sans-serif;
+        }
+
+        html, body {
+            height: 100%;
+            background: var(--cream);
+            font-family: var(--font-body);
+            color: var(--ink);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .card {
+            text-align: center;
+            max-width: 340px;
+            padding: 0 1.5rem;
+        }
+
+        /* Logo */
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: .55rem;
+            margin-bottom: 2rem;
+        }
+
+        .logo-mark {
+            width: 32px; height: 32px;
+            background: var(--ink);
+            color: var(--cream);
+            font-family: var(--font-mono);
+            font-size: .7rem;
+            font-weight: 500;
+            border-radius: 7px;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .logo-text {
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+        }
+
+        /* Spinner */
+        .spinner {
+            width: 40px; height: 40px;
+            border: 2.5px solid #DDD9CE;
+            border-top-color: var(--ink);
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+            margin: 0 auto 1.2rem;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Checkmark (sucesso) */
+        .check {
+            display: none;
+            width: 40px; height: 40px;
+            margin: 0 auto 1.2rem;
+        }
+
+        .check circle { fill: var(--green-light); }
+        .check path   { stroke: var(--green); stroke-width: 2.5; stroke-linecap: round; fill: none; stroke-dasharray: 30; stroke-dashoffset: 30; animation: draw .4s ease forwards; }
+
+        @keyframes draw { to { stroke-dashoffset: 0; } }
+
+        /* Xmark (erro) */
+        .xmark {
+            display: none;
+            width: 40px; height: 40px;
+            margin: 0 auto 1.2rem;
+        }
+
+        .xmark circle { fill: var(--red-light); }
+        .xmark path   { stroke: var(--red); stroke-width: 2.5; stroke-linecap: round; fill: none; }
+
+        h2 {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            margin-bottom: .5rem;
+        }
+
+        p {
+            font-size: .85rem;
+            color: var(--ink-muted);
+            line-height: 1.6;
+        }
+
+        .redirect-hint {
+            margin-top: 1.4rem;
+            font-family: var(--font-mono);
+            font-size: .72rem;
+            color: var(--ink-faint);
+        }
+
+        .btn {
+            display: inline-block;
+            margin-top: 1.4rem;
+            padding: .6rem 1.4rem;
+            background: var(--ink);
+            color: var(--cream);
+            border-radius: 8px;
+            font-family: var(--font-body);
+            font-size: .85rem;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+
+    <div class="logo">
+        <div class="logo-mark">AF</div>
+        <span class="logo-text">AutoFinance</span>
+    </div>
+
+    <!-- Estado: carregando -->
+    <div class="spinner" id="spinner"></div>
+    <h2 id="title">Finalizando login…</h2>
+    <p id="desc">Aguarde enquanto confirmamos sua conta.</p>
+    <span class="redirect-hint" id="hint"></span>
+
+    <!-- Estado: sucesso -->
+    <svg class="check" id="checkIcon" viewBox="0 0 40 40">
+        <circle cx="20" cy="20" r="18"/>
+        <path d="M12 20l6 6 10-12"/>
+    </svg>
+
+    <!-- Estado: erro -->
+    <svg class="xmark" id="xmarkIcon" viewBox="0 0 40 40">
+        <circle cx="20" cy="20" r="18"/>
+        <path d="M14 14l12 12M26 14L14 26"/>
+    </svg>
+
+    <a href="/login.html" class="btn" id="retryBtn" style="display:none">Tentar novamente</a>
+
+</div>
+
+<script type="module">
+    // ── Importa o sdk ────────────────────────────────────────────
+    // Ajuste o caminho caso mova este arquivo
+    import { isLoggedIn } from '../src/shared/api.js';
+
+    const spinner  = document.getElementById('spinner');
+    const checkEl  = document.getElementById('checkIcon');
+    const xmarkEl  = document.getElementById('xmarkIcon');
+    const titleEl  = document.getElementById('title');
+    const descEl   = document.getElementById('desc');
+    const hintEl   = document.getElementById('hint');
+    const retryBtn = document.getElementById('retryBtn');
+
+    function showSuccess(msg = 'Login realizado!', sub = 'Redirecionando para o app…') {
+        spinner.style.display = 'none';
+        checkEl.style.display = 'block';
+        titleEl.textContent   = msg;
+        descEl.textContent    = sub;
+    }
+
+    function showError(msg = 'Algo deu errado.', sub = 'Não foi possível completar o login.') {
+        spinner.style.display  = 'none';
+        xmarkEl.style.display  = 'block';
+        titleEl.textContent    = msg;
+        descEl.textContent     = sub;
+        retryBtn.style.display = 'inline-block';
+    }
+
+    function countdown(seconds, cb) {
+        hintEl.textContent = `Redirecionando em ${seconds}s…`;
+        const id = setInterval(() => {
+            seconds -= 1;
+            if (seconds <= 0) { clearInterval(id); cb(); return; }
+            hintEl.textContent = `Redirecionando em ${seconds}s…`;
+        }, 1000);
+    }
+
+    // ── Supabase envia o token via hash: #access_token=...&refresh_token=... ──
+    function parseHash() {
+        const raw = window.location.hash.substring(1);
+        if (!raw) return null;
+
+        const params = {};
+        raw.split('&').forEach(pair => {
+            const [k, v] = pair.split('=');
+            params[decodeURIComponent(k)] = decodeURIComponent(v || '');
+        });
+
+        return params;
+    }
+
+    // ── Também pode chegar via query string em alguns fluxos ──────
+    function parseQuery() {
+        const params = {};
+        new URLSearchParams(window.location.search).forEach((v, k) => { params[k] = v; });
+        return params;
+    }
+
+    async function handleCallback() {
+        const hash  = parseHash();
+        const query = parseQuery();
+
+        // Erro explícito do Supabase
+        const errorDesc = hash?.error_description || query?.error_description;
+        if (errorDesc) {
+            showError('Login recusado', decodeURIComponent(errorDesc).replace(/\+/g, ' '));
+            return;
+        }
+
+        const accessToken  = hash?.access_token  || query?.access_token;
+        const refreshToken = hash?.refresh_token || query?.refresh_token;
+
+        if (!accessToken) {
+            // Já estava logado (sessão ativa)
+            if (isLoggedIn()) {
+                showSuccess('Sessão ativa.', 'Redirecionando para o app…');
+                countdown(2, () => { window.location.href = '/index.html'; });
+                return;
+            }
+
+            showError('Token não encontrado.', 'O link pode ter expirado. Tente fazer login novamente.');
+            return;
+        }
+
+        // Salva os tokens (mesma lógica do api.js)
+        localStorage.setItem('cf_access',  accessToken);
+        if (refreshToken) localStorage.setItem('cf_refresh', refreshToken);
+
+        // Limpa o hash da URL (não expor token no histórico do browser)
+        history.replaceState(null, '', window.location.pathname);
+
+        showSuccess('Login realizado!', 'Redirecionando para o app…');
+        countdown(2, () => { window.location.href = '/index.html'; });
+    }
+
+    handleCallback();
+</script>
+</body>
+</html>

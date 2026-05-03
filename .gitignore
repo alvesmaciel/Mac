@@ -1,0 +1,29 @@
+# ═══════════════════════════════════════════════════════════════
+#  .gitignore — raiz do repositório
+#  Coloque este arquivo na RAIZ do seu repo (mesmo nível de
+#  ChatFinance/, HomePage/, etc.)
+# ═══════════════════════════════════════════════════════════════
+
+# ── Nunca subir ─────────────────────────────────────────────────
+.env
+*.env
+.env.local
+.env.production
+
+# ── Sistema operacional ──────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Editores ─────────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.suo
+*.user
+
+# ── Dependências (caso adicione npm no futuro) ───────────────────
+node_modules/
+vendor/
+
+# ── Logs ─────────────────────────────────────────────────────────
+*.log
